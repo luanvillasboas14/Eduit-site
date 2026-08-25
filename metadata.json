@@ -1,0 +1,8 @@
+{
+  "name": "Remix Cruzeiro do Sul Virtual",
+  "description": "Plataforma de ensino a distância EAD da Cruzeiro do Sul Virtual com cursos de graduação, pós-graduação e extensão.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
