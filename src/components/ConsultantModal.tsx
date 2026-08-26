@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, MessageSquare, CheckCircle2, PhoneCall, ShieldCheck } from 'lucide-react';
+import { leadTipoFromCourse, submitLead } from '../lib/leads';
 
 interface ConsultantModalProps {
   isOpen: boolean;
@@ -16,14 +17,33 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
 }) => {
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [privacy, setPrivacy] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    window.open('https://wa.cruzeiroead.com.br/tronco', '_blank', 'noopener,noreferrer');
-    setSubmitted(true);
+    if (!privacy) return;
+    setError('');
+    setIsSending(true);
+    try {
+      await submitLead({
+        nome: name,
+        email,
+        celular: phone,
+        tipo: leadTipoFromCourse(defaultCourse),
+      });
+      window.open('https://wa.cruzeiroead.com.br/tronco', '_blank', 'noopener,noreferrer');
+      setSubmitted(true);
+    } catch {
+      setError('Não foi possível enviar. Tente novamente.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -105,13 +125,41 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
                 />
               </div>
 
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="Ex: maria@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-400"
+                />
+              </div>
+
+              <label className="flex items-start gap-2 text-[11px] text-slate-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={privacy}
+                  onChange={(e) => setPrivacy(e.target.checked)}
+                  className="mt-0.5 accent-yellow-400"
+                />
+                <span>Li e aceito a política de privacidade.</span>
+              </label>
+
+              {error && <p className="text-[11px] text-red-400">{error}</p>}
+
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={isSending}
+                  className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-60 text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <PhoneCall className="w-4 h-4" />
-                  <span>Iniciar Atendimento no WhatsApp</span>
+                  <span>{isSending ? 'Enviando...' : 'Iniciar Atendimento no WhatsApp'}</span>
                 </button>
               </div>
 

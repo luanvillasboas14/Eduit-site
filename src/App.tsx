@@ -21,6 +21,7 @@ import { ScrollToTopButton } from './components/ScrollToTopButton';
 
 import { Course, NewsArticle, Polo } from './types';
 import { fetchBlogPost } from './lib/supabase';
+import { captureGclidFromUrl } from './lib/leads';
 import {
   BLOG_CATEGORIES,
   GRAD_CATEGORY_BY_NAME,
@@ -40,10 +41,11 @@ import {
 } from './data/siteUrls';
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [pathname]);
+    captureGclidFromUrl();
+  }, [pathname, search]);
   return null;
 }
 

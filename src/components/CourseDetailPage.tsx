@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Course, Polo } from '../types';
 import { COURSES_DATA } from '../data/courses';
 import { POLOS_DATA } from '../data/polos';
+import { leadTipoFromCourse, submitLead } from '../lib/leads';
 import {
   Star,
   Clock,
@@ -60,6 +61,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [privacy, setPrivacy] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [formError, setFormError] = useState('');
   const [entryMethod, setEntryMethod] = useState('vestibular-online');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
@@ -95,9 +99,24 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     setSelectedCityFilter('todos');
   }, [course.id]);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    if (!privacy) return;
+    setFormError('');
+    setIsSending(true);
+    try {
+      await submitLead({
+        nome: name,
+        email,
+        celular: phone,
+        tipo: leadTipoFromCourse(course.title, isPostGrad),
+      });
+      setIsSubmitted(true);
+    } catch {
+      setFormError('Não foi possível enviar. Tente novamente.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // Available cities for filter pills
@@ -723,11 +742,39 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     />
                   </div>
 
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                      E-mail
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="Ex: maria@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400 shadow-inner"
+                    />
+                  </div>
+
+                  <label className="flex items-start gap-2 text-[11px] text-slate-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={privacy}
+                      onChange={(e) => setPrivacy(e.target.checked)}
+                      className="mt-0.5 accent-yellow-400"
+                    />
+                    <span>Li e aceito a política de privacidade.</span>
+                  </label>
+
+                  {formError && <p className="text-[11px] text-red-400">{formError}</p>}
+
                   <button
                     type="submit"
-                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-3.5 rounded-xl text-xs transition-all shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95 mt-2"
+                    disabled={isSending}
+                    className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-60 text-slate-950 font-bold py-3.5 rounded-xl text-xs transition-all shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95 mt-2"
                   >
-                    <span>Ver Preço</span>
+                    <span>{isSending ? 'Enviando...' : 'Ver Preço'}</span>
                     <Send className="w-4 h-4" />
                   </button>
                 </form>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Course } from '../types';
+import { leadTipoFromCourse, submitLead } from '../lib/leads';
 import { X, CheckCircle2, Clock, Users, Star, Award, GraduationCap, ArrowRight } from 'lucide-react';
 
 interface CourseModalProps {
@@ -17,12 +18,30 @@ export const CourseModal: React.FC<CourseModalProps> = ({
   const [studentName, setStudentName] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
+  const [privacy, setPrivacy] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [formError, setFormError] = useState('');
 
   if (!course) return null;
 
-  const handleEnroll = (e: React.FormEvent) => {
+  const handleEnroll = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEnrolled(true);
+    if (!privacy) return;
+    setFormError('');
+    setIsSending(true);
+    try {
+      await submitLead({
+        nome: studentName,
+        email: studentEmail,
+        celular: studentPhone,
+        tipo: leadTipoFromCourse(course.title, course.categoryBadge === 'PÓS-GRADUAÇÃO'),
+      });
+      setEnrolled(true);
+    } catch {
+      setFormError('Não foi possível enviar. Tente novamente.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -176,11 +195,23 @@ export const CourseModal: React.FC<CourseModalProps> = ({
                     onChange={(e) => setStudentEmail(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-400"
                   />
+                  <label className="flex items-start gap-2 text-[11px] text-slate-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={privacy}
+                      onChange={(e) => setPrivacy(e.target.checked)}
+                      className="mt-0.5 accent-yellow-400"
+                    />
+                    <span>Li e aceito a política de privacidade.</span>
+                  </label>
+                  {formError && <p className="text-[11px] text-red-400">{formError}</p>}
                   <button
                     type="submit"
-                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={isSending}
+                    className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-60 text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <span>Garantir Vaga com Desconto</span>
+                    <span>{isSending ? 'Enviando...' : 'Garantir Vaga com Desconto'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
