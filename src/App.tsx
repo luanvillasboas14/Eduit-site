@@ -22,12 +22,14 @@ import { ScrollToTopButton } from './components/ScrollToTopButton';
 import { Course, NewsArticle, Polo } from './types';
 import { fetchBlogPost } from './lib/supabase';
 import {
+  BLOG_CATEGORIES,
   GRAD_CATEGORY_BY_NAME,
   GRAD_CATEGORY_ROUTES,
   PATHS,
   POLO_PATHS,
   POS_CATEGORY_BY_NAME,
   POS_CATEGORY_ROUTES,
+  blogCategoryPath,
   coursePath,
   findCourseBySlug,
   findPoloBySlug,
@@ -122,9 +124,26 @@ export default function App() {
                 onSelectArticle={handleSelectArticle}
                 onOpenConsultant={() => handleOpenConsultant()}
                 onNavigateHome={() => navigate(PATHS.home)}
+                onCategoryChange={(category) => navigate(blogCategoryPath(category))}
               />
             }
           />
+
+          {BLOG_CATEGORIES.map((category) => (
+            <Route
+              key={category.path}
+              path={category.path}
+              element={
+                <NewsPage
+                  onSelectArticle={handleSelectArticle}
+                  onOpenConsultant={() => handleOpenConsultant()}
+                  onNavigateHome={() => navigate(PATHS.home)}
+                  initialCategory={category.name}
+                  onCategoryChange={(name) => navigate(blogCategoryPath(name))}
+                />
+              }
+            />
+          ))}
 
           <Route
             path="/post/:slug"

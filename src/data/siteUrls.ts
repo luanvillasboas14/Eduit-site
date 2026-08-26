@@ -10,6 +10,44 @@ export const PATHS = {
   blog: '/blog',
 } as const;
 
+export type BlogCategory = {
+  path: string;
+  name: string;
+};
+
+/** Categorias do blog no Wix (nome + endereço iguais ao site atual). */
+export const BLOG_CATEGORIES: BlogCategory[] = [
+  { path: '/blog/categories/cursos', name: 'Cursos de Graduação' },
+  { path: '/blog/categories/cursos-de-pos-graduacao', name: 'Cursos de Pós-Graduação' },
+  { path: '/blog/categories/curiosidades/dicas', name: 'Curiosidades/dicas' },
+  { path: '/blog/categories/financeiro', name: 'Financeiro' },
+  { path: '/blog/categories/duvidas-academicas', name: 'Duvidas Academicas' },
+];
+
+export const BLOG_CATEGORY_BY_PATH = Object.fromEntries(
+  BLOG_CATEGORIES.map((category) => [category.path, category.name]),
+);
+
+export const BLOG_CATEGORY_BY_NAME = Object.fromEntries(
+  BLOG_CATEGORIES.map((category) => [category.name, category.path]),
+);
+
+export function blogCategoryPath(name: string): string {
+  return BLOG_CATEGORY_BY_NAME[name] ?? PATHS.blog;
+}
+
+export function articleMatchesBlogCategory(article: NewsArticle, categoryName: string): boolean {
+  if (categoryName === 'Todos') return true;
+  if (article.category === categoryName) return true;
+  return Boolean(article.tags?.includes(categoryName));
+}
+
+export function wixBlogCategoryLabel(article: Pick<NewsArticle, 'category' | 'badge'>): string | null {
+  if (article.category && BLOG_CATEGORY_BY_NAME[article.category]) return article.category;
+  if (article.badge && BLOG_CATEGORY_BY_NAME[article.badge]) return article.badge;
+  return null;
+}
+
 export type CourseListFilter = {
   category: string;
   modality?: string;
@@ -156,6 +194,8 @@ export function navPageFromPath(pathname: string): NavPage {
   ) {
     return 'pos-graduacao';
   }
-  if (pathname === PATHS.blog || pathname.startsWith('/post/')) return 'news';
+  if (pathname === PATHS.blog || pathname.startsWith('/post/') || pathname.startsWith('/blog/categories/')) {
+    return 'news';
+  }
   return 'home';
 }

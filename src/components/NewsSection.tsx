@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
 import { fetchBlogPosts } from '../lib/supabase';
+import { wixBlogCategoryLabel } from '../data/siteUrls';
 import { ArrowRight, Clock, Calendar, HelpCircle } from 'lucide-react';
 
 interface NewsSectionProps {
@@ -78,9 +79,11 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />
-                <span className="absolute top-2.5 left-2.5 bg-[#070d19]/90 text-yellow-400 font-extrabold text-[9px] uppercase px-2.5 py-0.5 rounded-full backdrop-blur-sm border border-slate-700/80 shadow-md">
-                  {article.badge}
-                </span>
+                {wixBlogCategoryLabel(article) && (
+                  <span className="absolute top-2.5 left-2.5 bg-[#070d19]/90 text-yellow-400 font-extrabold text-[9px] uppercase px-2.5 py-0.5 rounded-full backdrop-blur-sm border border-slate-700/80 shadow-md">
+                    {wixBlogCategoryLabel(article)}
+                  </span>
+                )}
               </div>
 
               {/* Card Content */}
@@ -178,9 +181,11 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
                 className="bg-[#0b1329] border border-slate-800/80 rounded-xl p-3.5 hover:border-yellow-500/40 transition-all duration-300 cursor-pointer group space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="bg-slate-900 border border-slate-800 text-yellow-400 font-extrabold text-[9px] uppercase px-2 py-0.5 rounded-md">
-                    {article.badge}
-                  </span>
+                  {wixBlogCategoryLabel(article) && (
+                    <span className="bg-slate-900 border border-slate-800 text-yellow-400 font-extrabold text-[9px] uppercase px-2 py-0.5 rounded-md">
+                      {wixBlogCategoryLabel(article)}
+                    </span>
+                  )}
                 </div>
 
                 <h4 className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors leading-snug">

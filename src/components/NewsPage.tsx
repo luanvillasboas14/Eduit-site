@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { NewsArticle } from '../types';
 import { fetchBlogPosts } from '../lib/supabase';
+import { BLOG_CATEGORIES, articleMatchesBlogCategory, wixBlogCategoryLabel } from '../data/siteUrls';
 import newsBannerImg from '../assets/images/Cabeçalho (9).jpg';
 import {
   Search,
@@ -21,18 +22,26 @@ interface NewsPageProps {
   onSelectArticle: (article: NewsArticle) => void;
   onOpenConsultant: () => void;
   onNavigateHome: () => void;
+  initialCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
 export const NewsPage: React.FC<NewsPageProps> = ({
   onSelectArticle,
   onOpenConsultant,
+  initialCategory = 'Todos',
+  onCategoryChange,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recentes' | 'tempo' | 'alfabetico'>('recentes');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory);
+  }, [initialCategory]);
 
   useEffect(() => {
     let active = true;
@@ -48,17 +57,21 @@ export const NewsPage: React.FC<NewsPageProps> = ({
     };
   }, []);
 
-  const categories = useMemo(() => {
-    const names = [...new Set(articles.map((article) => article.category).filter(Boolean))] as string[];
-    names.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    return [{ name: 'Todos', icon: Layers }, ...names.map((name) => ({ name, icon: Tag }))];
-  }, [articles]);
+  const selectCategory = (name: string) => {
+    setSelectedCategory(name);
+    onCategoryChange?.(name);
+    if (isMobileFilterOpen) setIsMobileFilterOpen(false);
+  };
 
-  // Count articles per theme
+  const categories = useMemo(
+    () => [{ name: 'Todos', icon: Layers }, ...BLOG_CATEGORIES.map((category) => ({ name: category.name, icon: Tag }))],
+    [],
+  );
+
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { Todos: articles.length };
-    articles.forEach((article) => {
-      counts[article.category] = (counts[article.category] || 0) + 1;
+    BLOG_CATEGORIES.forEach((category) => {
+      counts[category.name] = articles.filter((article) => articleMatchesBlogCategory(article, category.name)).length;
     });
     return counts;
   }, [articles]);
@@ -66,8 +79,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
   // Filtered and sorted articles
   const filteredArticles = useMemo(() => {
     let result = articles.filter((article) => {
-      const matchesCategory =
-        selectedCategory === 'Todos' || article.category === selectedCategory;
+      const matchesCategory = articleMatchesBlogCategory(article, selectedCategory);
 
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -96,7 +108,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
   }, [articles, selectedCategory, searchQuery, sortBy]);
 
   const clearFilters = () => {
-    setSelectedCategory('Todos');
+    selectCategory('Todos');
     setSearchQuery('');
     setSortBy('recentes');
   };
@@ -243,10 +255,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
                     return (
                       <button
                         key={cat.name}
-                        onClick={() => {
-                          setSelectedCategory(cat.name);
-                          if (isMobileFilterOpen) setIsMobileFilterOpen(false);
-                        }}
+                        onClick={() => selectCategory(cat.name)}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-yellow-400 text-slate-950 shadow-md shadow-yellow-400/20 font-bold'
@@ -360,9 +369,11 @@ export const NewsPage: React.FC<NewsPageProps> = ({
 
                       {/* Badges */}
                       <div className="absolute top-3 left-3 flex items-center gap-2">
+                      {wixBlogCategoryLabel(article) && (
                         <span className="bg-slate-950/90 backdrop-blur-sm border border-slate-700/80 text-yellow-400 font-extrabold text-[10px] uppercase px-2.5 py-0.5 rounded-md shadow-md">
-                          {article.category}
+                          {wixBlogCategoryLabel(article)}
                         </span>
+                      )}
                       </div>
                     </div>
 
@@ -399,7 +410,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
                         ) : (
                           <div className="flex items-center gap-1 text-[11px] text-slate-400">
                             <Tag className="w-3 h-3 text-yellow-400" />
-                            <span>{article.category}</span>
+                            <span>{wixBlogCategoryLabel(article) || 'Blog'}</span>
                           </div>
                         )}
 

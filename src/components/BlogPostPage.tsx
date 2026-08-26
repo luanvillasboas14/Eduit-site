@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
 import { fetchRelatedPosts } from '../lib/supabase';
+import { wixBlogCategoryLabel } from '../data/siteUrls';
 import {
   ChevronRight,
   ArrowLeft,
@@ -103,12 +104,11 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
               {/* Badges & Meta */}
               <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs">
-                <span className="bg-yellow-400 text-slate-950 font-black text-[10px] sm:text-xs uppercase px-3 py-1 rounded-full shadow-sm">
-                  {article.badge || article.category}
-                </span>
-                <span className="bg-slate-900 border border-slate-700 text-slate-300 font-bold text-[10px] sm:text-xs uppercase px-2.5 py-1 rounded-lg">
-                  {article.category}
-                </span>
+                {wixBlogCategoryLabel(article) && (
+                  <span className="bg-yellow-400 text-slate-950 font-black text-[10px] sm:text-xs uppercase px-3 py-1 rounded-full shadow-sm">
+                    {wixBlogCategoryLabel(article)}
+                  </span>
+                )}
                 <div className="flex items-center gap-3 text-slate-400 text-xs ml-auto">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-yellow-400" />
@@ -346,7 +346,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <span className="bg-yellow-400 text-slate-950 font-extrabold text-[9px] uppercase px-2 py-0.5 rounded-full inline-block">
-                            {rel.category}
+                            {wixBlogCategoryLabel(rel) || rel.category}
                           </span>
                           <span className="text-[10px] text-slate-400 font-medium">{rel.date}</span>
                         </div>
