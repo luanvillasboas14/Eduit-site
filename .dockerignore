@@ -9,3 +9,5 @@ dist
 .DS_Store
 coverage
 *.log
+src/data/wix-blog.json
+scripts

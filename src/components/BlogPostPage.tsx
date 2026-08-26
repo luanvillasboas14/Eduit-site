@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
-import { NEWS_DATA } from '../data/news';
+import { fetchRelatedPosts } from '../lib/supabase';
 import {
   ChevronRight,
   ArrowLeft,
@@ -33,9 +33,13 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
   const [leadName, setLeadName] = useState('');
   const [leadPhone, setLeadPhone] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [relatedArticles, setRelatedArticles] = useState<NewsArticle[]>([]);
 
-  // Related articles (same category or others, excluding current)
-  const relatedArticles = NEWS_DATA.filter((a) => a.id !== article.id).slice(0, 3);
+  useEffect(() => {
+    fetchRelatedPosts(article.id, article.category)
+      .then(setRelatedArticles)
+      .catch(() => setRelatedArticles([]));
+  }, [article.id, article.category]);
 
   const handleShare = () => {
     if (navigator.share) {

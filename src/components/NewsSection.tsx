@@ -1,6 +1,6 @@
-import React from 'react';
-import { NEWS_DATA } from '../data/news';
+import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
+import { fetchBlogPosts } from '../lib/supabase';
 import { ArrowRight, Clock, Calendar, HelpCircle } from 'lucide-react';
 
 interface NewsSectionProps {
@@ -14,8 +14,26 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
   onOpenConsultant,
   onNavigateToNews,
 }) => {
-  const featuredArticle = NEWS_DATA[0];
-  const sideArticles = NEWS_DATA.slice(1, 4);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+
+  useEffect(() => {
+    fetchBlogPosts()
+      .then((rows) => setArticles(rows.slice(0, 4)))
+      .catch(() => setArticles([]));
+  }, []);
+
+  const featuredArticle = articles[0];
+  const sideArticles = articles.slice(1, 4);
+
+  if (!featuredArticle) {
+    return (
+      <section id="noticias" className="bg-slate-100 pt-6 sm:pt-10 pb-8 sm:pb-12 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-slate-500">
+          Carregando novidades...
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="noticias" className="bg-slate-100 pt-6 sm:pt-10 pb-8 sm:pb-12 border-b border-slate-200">
@@ -44,7 +62,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
 
         {/* Mobile View: Horizontal swipe carousel matching FeaturedCourses */}
         <div className="flex lg:hidden gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-[8.333%] snap-x snap-mandatory scrollbar-none mb-4">
-          {NEWS_DATA.map((article) => (
+          {articles.map((article) => (
             <div
               key={article.id}
               className="w-[76vw] min-w-[76vw] max-w-[280px] xs:w-[270px] xs:min-w-[270px] snap-center bg-[#0b1329] border-2 border-slate-800 hover:border-yellow-400 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col group hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/15 shrink-0"

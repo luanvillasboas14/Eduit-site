@@ -20,6 +20,7 @@ import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { ScrollToTopButton } from './components/ScrollToTopButton';
 
 import { Course, NewsArticle, Polo } from './types';
+import { fetchBlogPost } from './lib/supabase';
 import {
   GRAD_CATEGORY_BY_NAME,
   GRAD_CATEGORY_ROUTES,
@@ -28,7 +29,6 @@ import {
   POS_CATEGORY_BY_NAME,
   POS_CATEGORY_ROUTES,
   coursePath,
-  findArticleBySlug,
   findCourseBySlug,
   findPoloBySlug,
   isListingPath,
@@ -350,9 +350,39 @@ function BlogPostRoute({
 }) {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const article = findArticleBySlug(slug);
+  const [article, setArticle] = useState<NewsArticle | null>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'missing'>('loading');
 
-  if (!article) {
+  useEffect(() => {
+    if (!slug) {
+      setStatus('missing');
+      return;
+    }
+    let active = true;
+    setStatus('loading');
+    fetchBlogPost(slug)
+      .then((found) => {
+        if (!active) return;
+        setArticle(found);
+        setStatus(found ? 'ready' : 'missing');
+      })
+      .catch(() => {
+        if (active) setStatus('missing');
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-slate-400 text-sm">
+        Carregando postagem...
+      </div>
+    );
+  }
+
+  if (status === 'missing' || !article) {
     return <Navigate to={PATHS.blog} replace />;
   }
 

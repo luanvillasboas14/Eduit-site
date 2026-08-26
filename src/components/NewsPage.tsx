@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { NEWS_DATA } from '../data/news';
+import React, { useState, useMemo, useEffect } from 'react';
 import { NewsArticle } from '../types';
+import { fetchBlogPosts } from '../lib/supabase';
 import newsBannerImg from '../assets/images/Cabeçalho (9).jpg';
 import {
   Search,
@@ -9,12 +9,7 @@ import {
   ArrowRight,
   Sparkles,
   Layers,
-  GraduationCap,
-  Briefcase,
-  Cpu,
   BookOpen,
-  HelpCircle,
-  Building2,
   Filter,
   ArrowUpDown,
   X,
@@ -36,30 +31,41 @@ export const NewsPage: React.FC<NewsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recentes' | 'tempo' | 'alfabetico'>('recentes');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Categories list with themed icons
-  const categories = [
-    { name: 'Todos', icon: Layers },
-    { name: 'Vestibular', icon: GraduationCap },
-    { name: 'Carreira', icon: Briefcase },
-    { name: 'Tecnologia', icon: Cpu },
-    { name: 'Educação', icon: BookOpen },
-    { name: 'Dicas de Estudo', icon: HelpCircle },
-    { name: 'Parcerias', icon: Building2 },
-  ];
+  useEffect(() => {
+    let active = true;
+    fetchBlogPosts()
+      .then((rows) => {
+        if (active) setArticles(rows);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categories = useMemo(() => {
+    const names = [...new Set(articles.map((article) => article.category).filter(Boolean))] as string[];
+    names.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    return [{ name: 'Todos', icon: Layers }, ...names.map((name) => ({ name, icon: Tag }))];
+  }, [articles]);
 
   // Count articles per theme
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { Todos: NEWS_DATA.length };
-    NEWS_DATA.forEach((article) => {
+    const counts: Record<string, number> = { Todos: articles.length };
+    articles.forEach((article) => {
       counts[article.category] = (counts[article.category] || 0) + 1;
     });
     return counts;
-  }, []);
+  }, [articles]);
 
   // Filtered and sorted articles
   const filteredArticles = useMemo(() => {
-    let result = NEWS_DATA.filter((article) => {
+    let result = articles.filter((article) => {
       const matchesCategory =
         selectedCategory === 'Todos' || article.category === selectedCategory;
 
@@ -87,7 +93,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
     // 'recentes' keeps default array order which is reverse chronological
 
     return result;
-  }, [selectedCategory, searchQuery, sortBy]);
+  }, [articles, selectedCategory, searchQuery, sortBy]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');
@@ -96,7 +102,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
   };
 
   // The very first article to be displayed as top hero banner (same layout as Graduação)
-  const featuredHero = NEWS_DATA.length > 0 ? NEWS_DATA[0] : null;
+  const featuredHero = articles.find((article) => article.isFeatured) ?? articles[0] ?? null;
 
   return (
     <div className="bg-slate-100 min-h-screen pt-4 sm:pt-8 pb-24 overflow-x-hidden w-full">
@@ -145,6 +151,9 @@ export const NewsPage: React.FC<NewsPageProps> = ({
 
       {/* Main Content Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {isLoading && (
+          <p className="text-sm text-slate-500 mb-6">Carregando postagens...</p>
+        )}
         {/* Mobile Filter Toggle & Sort Bar */}
         <div className="lg:hidden mb-6 flex items-center justify-between gap-3">
           <button
