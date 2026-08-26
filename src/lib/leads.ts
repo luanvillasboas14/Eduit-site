@@ -1,7 +1,7 @@
 export const LEAD_WEBHOOK_URL =
   'https://n8n-new-n8n.ca31ey.easypanel.host/webhook/criacao_csv_leads_v3';
 
-export type LeadTipo = 'graduação' | 'pós-graduação';
+export type LeadTipo = 'Graduação' | 'Pós-Graduação';
 
 export type LeadPayload = {
   nome: string;
@@ -36,8 +36,8 @@ export function getGclid(): string {
 }
 
 export function leadTipoFromCourse(title?: string, isPostGrad?: boolean): LeadTipo {
-  if (isPostGrad) return 'pós-graduação';
-  if (!title) return 'graduação';
+  if (isPostGrad) return 'Pós-Graduação';
+  if (!title) return 'Graduação';
   const normalized = title.toLowerCase();
   if (
     normalized.includes('pós') ||
@@ -45,16 +45,9 @@ export function leadTipoFromCourse(title?: string, isPostGrad?: boolean): LeadTi
     normalized.includes('mba') ||
     normalized.includes('especializa')
   ) {
-    return 'pós-graduação';
+    return 'Pós-Graduação';
   }
-  return 'graduação';
-}
-
-function leadEndpoint(): string {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return LEAD_WEBHOOK_URL;
-  }
-  return '/api/leads';
+  return 'Graduação';
 }
 
 export async function submitLead(input: {
@@ -70,10 +63,10 @@ export async function submitLead(input: {
     tipo: input.tipo,
     politica_privacidade: true,
     gclid: getGclid(),
-    origem: 'form-edutt',
+    origem: 'form-eduit',
   };
 
-  const response = await fetch(leadEndpoint(), {
+  const response = await fetch(LEAD_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

@@ -87,7 +87,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
         nome: name,
         email,
         celular: phone,
-        tipo: 'graduação',
+        tipo: 'Graduação',
       });
       setIsSubmitted(true);
     } catch {
