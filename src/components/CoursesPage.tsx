@@ -23,6 +23,11 @@ interface CoursesPageProps {
   onOpenConsultant: (courseTitle?: string) => void;
   initialSearchQuery?: string;
   onSearchChange?: (query: string) => void;
+  initialCategory?: string;
+  initialModality?: string;
+  titleIncludes?: string;
+  onCategoryChange?: (category: string) => void;
+  onClearFilters?: () => void;
 }
 
 export const CoursesPage: React.FC<CoursesPageProps> = ({
@@ -30,9 +35,14 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
   onOpenConsultant,
   initialSearchQuery = '',
   onSearchChange,
+  initialCategory = 'Todos',
+  initialModality = 'Todas',
+  titleIncludes,
+  onCategoryChange,
+  onClearFilters,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
-  const [selectedModality, setSelectedModality] = useState<string>('Todas');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const [selectedModality, setSelectedModality] = useState<string>(initialModality);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
   const [sortBy, setSortBy] = useState<string>('populares');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
@@ -40,6 +50,14 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
   useEffect(() => {
     setSearchQuery(initialSearchQuery);
   }, [initialSearchQuery]);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory);
+  }, [initialCategory]);
+
+  useEffect(() => {
+    setSelectedModality(initialModality);
+  }, [initialModality]);
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -79,13 +97,16 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
         (selectedModality === 'EAD' && (course.modality.includes('EAD') || course.modality.includes('Online'))) ||
         (selectedModality === 'Semipresencial' && course.modality.includes('Semipresencial'));
 
+      const matchesTitle =
+        !titleIncludes || course.title.toLowerCase().includes(titleIncludes.toLowerCase());
+
       const matchesSearch =
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.modules.some((m) => m.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchesCategory && matchesModality && matchesSearch;
+      return matchesCategory && matchesModality && matchesTitle && matchesSearch;
     });
 
     // Sorting
@@ -98,13 +119,14 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
     }
 
     return result;
-  }, [selectedCategory, selectedModality, searchQuery, sortBy]);
+  }, [selectedCategory, selectedModality, searchQuery, sortBy, titleIncludes]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');
     setSelectedModality('Todas');
     setSearchQuery('');
     setSortBy('populares');
+    onClearFilters?.();
   };
 
   return (
@@ -248,6 +270,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                         key={cat.name}
                         onClick={() => {
                           setSelectedCategory(cat.name);
+                          onCategoryChange?.(cat.name);
                           if (isMobileFilterOpen) setIsMobileFilterOpen(false);
                         }}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${

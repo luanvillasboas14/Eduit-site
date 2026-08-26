@@ -1,29 +1,22 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   Instagram,
   Facebook,
   Phone,
   GraduationCap,
   Award,
-  MapPin,
   Newspaper,
   Home,
-  Headphones
 } from 'lucide-react';
 import logoImg from './Component 5 (2).png';
+import { PATHS } from '../data/siteUrls';
 
 interface FooterProps {
   onOpenConsultant: () => void;
-  onNavigate?: (page: 'home' | 'courses' | 'pos-graduacao' | 'polos' | 'news') => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenConsultant, onNavigate }) => {
-  const navigateTo = (page: 'home' | 'courses' | 'pos-graduacao' | 'polos' | 'news') => {
-    if (onNavigate) {
-      onNavigate(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+export const Footer: React.FC<FooterProps> = ({ onOpenConsultant }) => {
 
   return (
     <footer className="bg-[#040811] text-slate-400 py-4 sm:py-5 border-t border-slate-800">
@@ -32,12 +25,13 @@ export const Footer: React.FC<FooterProps> = ({ onOpenConsultant, onNavigate }) 
         {/* Top Section: Brand & Social */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
           <div className="flex items-center gap-3">
-            <img
-              src={logoImg}
-              alt="Cruzeiro do Sul Virtual"
-              className="h-7 sm:h-8 w-auto max-w-[170px] object-contain cursor-pointer"
-              onClick={() => navigateTo('home')}
-            />
+            <Link to={PATHS.home}>
+              <img
+                src={logoImg}
+                alt="Cruzeiro do Sul Virtual"
+                className="h-7 sm:h-8 w-auto max-w-[170px] object-contain cursor-pointer"
+              />
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -68,49 +62,40 @@ export const Footer: React.FC<FooterProps> = ({ onOpenConsultant, onNavigate }) 
             </h4>
             <ul className="flex flex-wrap gap-x-4 gap-y-1 text-slate-300 font-medium text-xs">
               <li>
-                <button
-                  onClick={() => navigateTo('home')}
+                <Link
+                  to={PATHS.home}
                   className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors cursor-pointer group"
                 >
                   <Home className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
                   <span>Início</span>
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('courses')}
+                <Link
+                  to={PATHS.graduacao}
                   className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors cursor-pointer group"
                 >
                   <GraduationCap className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
                   <span>Graduação</span>
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('pos-graduacao')}
+                <Link
+                  to={PATHS.posGraduacao}
                   className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors cursor-pointer group"
                 >
                   <Award className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
                   <span>Pós-graduação</span>
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('polos')}
-                  className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors cursor-pointer group"
-                >
-                  <MapPin className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
-                  <span>Polos EAD</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => navigateTo('news')}
+                <Link
+                  to={PATHS.blog}
                   className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors cursor-pointer group"
                 >
                   <Newspaper className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
                   <span>Notícias</span>
-                </button>
+                </Link>
               </li>
             </ul>
           </div>

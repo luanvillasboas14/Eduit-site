@@ -22,6 +22,10 @@ interface PostGradPageProps {
   onOpenConsultant: (courseTitle?: string) => void;
   initialSearchQuery?: string;
   onSearchChange?: (query: string) => void;
+  initialCategory?: string;
+  titleIncludes?: string;
+  onCategoryChange?: (category: string) => void;
+  onClearFilters?: () => void;
 }
 
 export const PostGradPage: React.FC<PostGradPageProps> = ({
@@ -29,8 +33,12 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
   onOpenConsultant,
   initialSearchQuery = '',
   onSearchChange,
+  initialCategory = 'Todos',
+  titleIncludes,
+  onCategoryChange,
+  onClearFilters,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
   const [sortBy, setSortBy] = useState<string>('populares');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
@@ -38,6 +46,10 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
   useEffect(() => {
     setSearchQuery(initialSearchQuery);
   }, [initialSearchQuery]);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory);
+  }, [initialCategory]);
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -70,13 +82,16 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
       const matchesCategory =
         selectedCategory === 'Todos' || course.category === selectedCategory;
 
+      const matchesTitle =
+        !titleIncludes || course.title.toLowerCase().includes(titleIncludes.toLowerCase());
+
       const matchesSearch =
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.modules.some((m) => m.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesTitle && matchesSearch;
     });
 
     // Sorting
@@ -89,12 +104,13 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
     }
 
     return result;
-  }, [selectedCategory, searchQuery, sortBy]);
+  }, [selectedCategory, searchQuery, sortBy, titleIncludes]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');
     setSearchQuery('');
     setSortBy('populares');
+    onClearFilters?.();
   };
 
   return (
@@ -238,6 +254,7 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
                         key={cat.name}
                         onClick={() => {
                           setSelectedCategory(cat.name);
+                          onCategoryChange?.(cat.name);
                           if (isMobileFilterOpen) setIsMobileFilterOpen(false);
                         }}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${

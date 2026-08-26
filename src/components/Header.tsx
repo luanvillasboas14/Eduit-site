@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
-import { Search, Menu, X, GraduationCap, ChevronRight, BookOpen, Home, Newspaper, Award, MapPin } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, Menu, X, GraduationCap, ChevronRight, Home, Newspaper, Award } from 'lucide-react';
 import logoImg from './Component 5 (2).png';
+import { PATHS, navPageFromPath } from '../data/siteUrls';
 
 interface HeaderProps {
-  currentPage: 'home' | 'courses' | 'pos-graduacao' | 'polos' | 'polo-detail' | 'course-detail' | 'news';
-  onNavigate: (page: 'home' | 'courses' | 'pos-graduacao' | 'polos' | 'news') => void;
   onOpenConsultant: () => void;
   onSearch?: (query: string) => void;
   searchQuery?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentPage,
-  onNavigate,
   onOpenConsultant,
   onSearch,
   searchQuery = '',
 }) => {
+  const { pathname } = useLocation();
+  const currentPage = navPageFromPath(pathname);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchQuery);
 
@@ -35,18 +35,13 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const handleLogoClick = () => {
-    onNavigate('home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <header className="sticky top-0 z-40 bg-[#070d19]/90 backdrop-blur-md border-b border-slate-800/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div 
-            onClick={handleLogoClick}
+          <Link
+            to={PATHS.home}
             className="flex items-center cursor-pointer group py-1"
           >
             <img
@@ -54,59 +49,49 @@ export const Header: React.FC<HeaderProps> = ({
               alt="Cruzeiro do Sul Virtual"
               className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[240px] object-contain group-hover:scale-105 transition-transform duration-200"
             />
-          </div>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-slate-300">
-            <button 
-              onClick={() => onNavigate('home')} 
+            <Link
+              to={PATHS.home}
               className={`hover:text-yellow-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer ${
                 currentPage === 'home' ? 'text-yellow-400 font-bold border-b-2 border-yellow-400' : ''
               }`}
             >
               <Home className="w-4 h-4" />
               <span>Início</span>
-            </button>
+            </Link>
 
-            <button 
-              onClick={() => onNavigate('courses')} 
+            <Link
+              to={PATHS.graduacao}
               className={`hover:text-yellow-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer ${
                 currentPage === 'courses' ? 'text-yellow-400 font-bold border-b-2 border-yellow-400' : ''
               }`}
             >
               <GraduationCap className="w-4 h-4" />
               <span>Graduação</span>
-            </button>
+            </Link>
 
-            <button 
-              onClick={() => onNavigate('pos-graduacao')} 
+            <Link
+              to={PATHS.posGraduacao}
               className={`hover:text-yellow-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer ${
                 currentPage === 'pos-graduacao' ? 'text-yellow-400 font-bold border-b-2 border-yellow-400' : ''
               }`}
             >
               <Award className="w-4 h-4" />
               <span>Pós-graduação</span>
-            </button>
+            </Link>
 
-            <button 
-              onClick={() => onNavigate('polos')} 
-              className={`hover:text-yellow-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer ${
-                currentPage === 'polos' ? 'text-yellow-400 font-bold border-b-2 border-yellow-400' : ''
-              }`}
-            >
-              <MapPin className="w-4 h-4" />
-              <span>Polos</span>
-            </button>
-
-            <button 
-              onClick={() => onNavigate('news')} 
+            <Link
+              to={PATHS.blog}
               className={`hover:text-yellow-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer ${
                 currentPage === 'news' ? 'text-yellow-400 font-bold border-b-2 border-yellow-400' : ''
               }`}
             >
               <Newspaper className="w-4 h-4" />
               <span>Notícias</span>
-            </button>
+            </Link>
           </nav>
 
           {/* Right Search Bar & CTA */}
@@ -170,11 +155,9 @@ export const Header: React.FC<HeaderProps> = ({
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </form>
 
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              onNavigate('home');
-            }}
+          <Link
+            to={PATHS.home}
+            onClick={() => setIsMobileMenuOpen(false)}
             className="w-full text-left py-2.5 px-3 text-sm text-slate-200 hover:bg-slate-800/60 rounded-lg flex items-center justify-between"
           >
             <span className="flex items-center gap-2">
@@ -182,13 +165,11 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Início</span>
             </span>
             <ChevronRight className="w-4 h-4 text-slate-500" />
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              onNavigate('courses');
-            }}
+          <Link
+            to={PATHS.graduacao}
+            onClick={() => setIsMobileMenuOpen(false)}
             className={`w-full text-left py-2.5 px-3 text-sm rounded-lg flex items-center justify-between transition-colors ${
               currentPage === 'courses'
                 ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-400/20'
@@ -200,13 +181,11 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Graduação</span>
             </span>
             <ChevronRight className="w-4 h-4 text-slate-500" />
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              onNavigate('pos-graduacao');
-            }}
+          <Link
+            to={PATHS.posGraduacao}
+            onClick={() => setIsMobileMenuOpen(false)}
             className={`w-full text-left py-2.5 px-3 text-sm rounded-lg flex items-center justify-between transition-colors ${
               currentPage === 'pos-graduacao'
                 ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-400/20'
@@ -218,31 +197,11 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Pós-graduação</span>
             </span>
             <ChevronRight className="w-4 h-4 text-slate-500" />
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              onNavigate('polos');
-            }}
-            className={`w-full text-left py-2.5 px-3 text-sm rounded-lg flex items-center justify-between transition-colors ${
-              currentPage === 'polos'
-                ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-400/20'
-                : 'text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-yellow-400" />
-              <span>Polos EAD</span>
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-500" />
-          </button>
-
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              onNavigate('news');
-            }}
+          <Link
+            to={PATHS.blog}
+            onClick={() => setIsMobileMenuOpen(false)}
             className={`w-full text-left py-2.5 px-3 text-sm rounded-lg flex items-center justify-between transition-colors ${
               currentPage === 'news'
                 ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-400/20'
@@ -254,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Notícias & Blog</span>
             </span>
             <ChevronRight className="w-4 h-4 text-slate-500" />
-          </button>
+          </Link>
 
           <div className="pt-3 border-t border-slate-800 flex flex-col gap-3">
             <button
