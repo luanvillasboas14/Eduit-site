@@ -21,6 +21,7 @@ import { ScrollToTopButton } from './components/ScrollToTopButton';
 
 import { Course, NewsArticle, Polo } from './types';
 import { fetchBlogPost } from './lib/supabase';
+import { fetchCourseBySlug } from './lib/courses';
 import { captureGclidFromUrl } from './lib/leads';
 import {
   BLOG_CATEGORIES,
@@ -32,7 +33,6 @@ import {
   POS_CATEGORY_ROUTES,
   blogCategoryPath,
   coursePath,
-  findCourseBySlug,
   findPoloBySlug,
   isListingPath,
   isPostgradCourse,
@@ -309,8 +309,33 @@ function CourseDetailRoute({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { slug } = useParams();
-  const course = findCourseBySlug(slug);
   const isPosPath = pathname.startsWith('/pos/');
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    fetchCourseBySlug(slug)
+      .then((found) => {
+        if (!active) return;
+        setCourse(found ?? null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-slate-300 text-sm">
+        Carregando curso...
+      </div>
+    );
+  }
 
   if (!course || isPostgradCourse(course) !== isPosPath) {
     return <Navigate to={isPosPath ? PATHS.posGraduacao : PATHS.graduacao} replace />;

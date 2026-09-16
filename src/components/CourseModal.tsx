@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Course } from '../types';
-import { leadTipoFromCourse, submitLead } from '../lib/leads';
-import { X, CheckCircle2, Clock, Users, Star, Award, GraduationCap, ArrowRight } from 'lucide-react';
+import { formatBRL, originalFromPrice } from '../lib/courses';
+import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
+import { X, CheckCircle2, Clock, Star, Award, GraduationCap, ArrowRight, MessageCircle } from 'lucide-react';
 
 interface CourseModalProps {
   course: Course | null;
@@ -137,20 +138,45 @@ export const CourseModal: React.FC<CourseModalProps> = ({
           {/* Price & Enrollment Form */}
           <div className="pt-6 border-t border-slate-800">
             {enrolled ? (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 text-center space-y-3">
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 text-center space-y-4">
                 <div className="w-12 h-12 rounded-full bg-yellow-400 text-slate-950 flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h4 className="text-lg font-bold text-white">
-                  Pré-Inscrição Recebida!
-                </h4>
-                <p className="text-xs text-slate-300">
-                  Um de nossos consultores entrará em contato com você via WhatsApp para confirmar seus dados e concorrer à bolsa promocional.
-                </p>
-                <button
-                  onClick={onClose}
-                  className="bg-yellow-400 text-slate-950 font-bold px-6 py-2 rounded-full text-xs"
+                <div>
+                  <h4 className="text-lg font-bold text-white">{course.title}</h4>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Olá, <strong className="text-white">{studentName}</strong>! Confira o valor especial da sua mensalidade com bolsa:
+                  </p>
+                </div>
+                <div className="bg-slate-950 border border-yellow-400/40 rounded-2xl p-4">
+                  {course.price > 0 && (
+                    <span className="text-xs text-slate-400 line-through block">
+                      De {formatBRL(originalFromPrice(course.price, course.originalPrice))}
+                    </span>
+                  )}
+                  <div className="flex items-baseline justify-center gap-1 mt-0.5">
+                    <span className="text-xs font-bold text-yellow-400 uppercase">Por apenas</span>
+                    <span className="text-3xl font-black text-white">
+                      {course.price > 0 ? formatBRL(course.price) : 'Consulte'}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">/mês</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-semibold block mt-1.5">
+                    ✓ Preço congelado até o final do curso • Sem taxa de matrícula
+                  </span>
+                </div>
+                <a
+                  href={`https://wa.cruzeiroead.com.br/tronco?text=${encodeURIComponent(
+                    `Olá! Meu nome é ${studentName}. Acabei de ver o valor da mensalidade do curso de ${course.title}${course.price > 0 ? ` (${formatBRL(course.price)}/mês)` : ''} e gostaria de conversar com um consultor para garantir minha bolsa!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/20 transition-all cursor-pointer"
                 >
+                  <MessageCircle className="w-4 h-4 fill-slate-950" />
+                  <span>Conversar com um Consultor no WhatsApp</span>
+                </a>
+                <button onClick={onClose} className="text-xs text-slate-400 hover:text-white underline cursor-pointer block mx-auto">
                   Fechar
                 </button>
               </div>
@@ -181,9 +207,12 @@ export const CourseModal: React.FC<CourseModalProps> = ({
                     <input
                       type="tel"
                       required
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      maxLength={15}
                       placeholder="WhatsApp (com DDD)"
                       value={studentPhone}
-                      onChange={(e) => setStudentPhone(e.target.value)}
+                      onChange={(e) => setStudentPhone(formatPhoneBR(e.target.value))}
                       className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-400"
                     />
                   </div>

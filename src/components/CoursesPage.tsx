@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { GRADUATION_COURSES } from '../data/courses';
+import { previewText, useCourses } from '../lib/courses';
 import { Course } from '../types';
 import coursesBannerImg from '../assets/images/graduação.jpg';
 import { 
@@ -46,6 +46,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
   const [sortBy, setSortBy] = useState<string>('populares');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
+  const { courses, loading, error } = useCourses('graduacao');
 
   useEffect(() => {
     setSearchQuery(initialSearchQuery);
@@ -80,22 +81,22 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
 
   // Count courses per category
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { Todos: GRADUATION_COURSES.length };
-    GRADUATION_COURSES.forEach((course) => {
+    const counts: Record<string, number> = { Todos: courses.length };
+    courses.forEach((course) => {
       counts[course.category] = (counts[course.category] || 0) + 1;
     });
     return counts;
-  }, []);
+  }, [courses]);
 
   const filteredAndSortedCourses = useMemo(() => {
-    let result = GRADUATION_COURSES.filter((course) => {
+    let result = courses.filter((course) => {
       const matchesCategory =
         selectedCategory === 'Todos' || course.category === selectedCategory;
-      
+
       const matchesModality =
         selectedModality === 'Todas' ||
-        (selectedModality === 'EAD' && (course.modality.includes('EAD') || course.modality.includes('Online'))) ||
-        (selectedModality === 'Semipresencial' && course.modality.includes('Semipresencial'));
+        course.modality.includes(selectedModality) ||
+        Boolean(course.offers?.some((offer) => offer.modality.includes(selectedModality)));
 
       const matchesTitle =
         !titleIncludes || course.title.toLowerCase().includes(titleIncludes.toLowerCase());
@@ -119,7 +120,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
     }
 
     return result;
-  }, [selectedCategory, selectedModality, searchQuery, sortBy, titleIncludes]);
+  }, [courses, selectedCategory, selectedModality, searchQuery, sortBy, titleIncludes]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');
@@ -368,7 +369,11 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             </div>
 
             {/* Courses Cards Grid */}
-            {filteredAndSortedCourses.length === 0 ? (
+            {loading || error ? (
+              <div className="bg-[#0b1329] border border-slate-800 rounded-3xl p-12 text-center text-slate-300 text-sm">
+                {loading ? 'Carregando cursos...' : error}
+              </div>
+            ) : filteredAndSortedCourses.length === 0 ? (
               <div className="bg-[#0b1329] border border-slate-800 rounded-3xl p-12 text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mx-auto text-slate-500">
                   <Search className="w-8 h-8 text-yellow-400" />
@@ -387,17 +392,16 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
                 {filteredAndSortedCourses.map((course) => (
                   <div
                     key={course.id}
-                    className="bg-[#0b1329] border border-slate-800/90 rounded-2xl overflow-hidden hover:border-yellow-500/50 hover:shadow-xl hover:shadow-yellow-500/5 transition-all group flex flex-col justify-between"
+                    className="bg-[#0b1329] border border-slate-800/90 rounded-xl overflow-hidden hover:border-yellow-500/50 hover:shadow-xl hover:shadow-yellow-500/5 transition-all group flex flex-col justify-between"
                   >
                     <div>
-                      {/* Image Header - Compact on mobile (h-28 to h-32), regular on desktop (h-44) */}
-                      <div 
+                      <div
                         onClick={() => onSelectCourse(course)}
-                        className="relative h-28 sm:h-36 md:h-44 overflow-hidden cursor-pointer"
+                        className="relative h-24 sm:h-28 md:h-32 overflow-hidden cursor-pointer"
                       >
                         <img
                           src={course.image}
@@ -405,45 +409,40 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />
+                        <span className="absolute top-2 left-2 bg-[#070d19]/90 text-yellow-400 font-extrabold text-[8.5px] sm:text-[9px] uppercase px-2 py-0.5 rounded-full backdrop-blur-sm border border-slate-700/80 shadow-md">
+                          {course.categoryBadge}
+                        </span>
                       </div>
 
-                      {/* Body Content - Tighter padding and margins on mobile */}
-                      <div className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-3">
-                        <div>
-                          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-wider text-yellow-400 uppercase">
-                            {course.categoryBadge}
-                          </span>
-                        </div>
-
-                        <h3 
+                      <div className="p-2.5 sm:p-3 space-y-1">
+                        <h3
                           onClick={() => onSelectCourse(course)}
-                          className="text-base sm:text-lg font-bold text-white group-hover:text-yellow-400 transition-colors leading-snug cursor-pointer line-clamp-2"
+                          className="text-[13px] sm:text-[14.5px] font-bold text-white group-hover:text-yellow-400 transition-colors leading-tight cursor-pointer line-clamp-2 min-h-[2rem]"
                         >
                           {course.title}
                         </h3>
 
-                        <p className="hidden md:block text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                          {course.description}
+                        <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                          {previewText(course.description)}
                         </p>
 
-                        <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-400 pt-0.5 sm:pt-1 flex-wrap">
-                          <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[9.5px] sm:text-[11px] text-slate-400 pt-0.5 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-slate-400" />
                             <span>{course.duration}</span>
                           </div>
                           <span>•</span>
-                          <span className="bg-slate-900 border border-slate-800 text-yellow-400 font-bold px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] uppercase">
+                          <span className="bg-slate-900 border border-slate-800 text-yellow-400 font-bold px-1.5 py-0.5 rounded text-[8.5px] sm:text-[9.5px] uppercase">
                             {course.modality}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Card Action Button */}
-                    <div className="p-3.5 sm:p-5 pt-0 mt-1 sm:mt-3 border-t border-slate-800/80">
+                    <div className="p-2.5 sm:p-3 pt-0 mt-0.5 border-t border-slate-800/80">
                       <button
                         onClick={() => onSelectCourse(course)}
-                        className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-2 sm:py-2.5 rounded-xl text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center justify-center gap-2 cursor-pointer active:scale-95 mt-2 sm:mt-3"
+                        className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-1.5 sm:py-2 rounded-lg text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 mt-1.5"
                       >
                         <span>Ver Página do Curso</span>
                         <ArrowRight className="w-3.5 h-3.5" />

@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Polo, Course } from '../types';
-import { GRADUATION_COURSES, POSTGRAD_COURSES } from '../data/courses';
+import { previewText, useCourses } from '../lib/courses';
 import { POLOS_DATA } from '../data/polos';
 import { PoloGoogleReviews } from './PoloGoogleReviews';
-import { submitLead } from '../lib/leads';
+import { formatPhoneBR, submitLead } from '../lib/leads';
 import {
   MapPin,
   Phone,
@@ -71,8 +71,10 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
   };
 
   // Related Courses to feature on the polo page in fluid carousel
-  const featuredGradCourses = GRADUATION_COURSES.slice(0, 8);
-  const featuredPostCourses = POSTGRAD_COURSES.slice(0, 6);
+  const { courses: graduationCourses } = useCourses('graduacao');
+  const { courses: postgradCourses } = useCourses('pos');
+  const featuredGradCourses = graduationCourses.slice(0, 8);
+  const featuredPostCourses = postgradCourses.slice(0, 6);
 
   // Other polos in the network
   const otherPolos = POLOS_DATA.filter((p) => p.id !== polo.id).slice(0, 6);
@@ -488,7 +490,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                         {course.title}
                       </h4>
                       <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                        {course.description}
+                        {previewText(course.description)}
                       </p>
                     </div>
 
@@ -582,7 +584,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                         {course.title}
                       </h4>
                       <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                        {course.description}
+                        {previewText(course.description)}
                       </p>
                     </div>
 
@@ -669,9 +671,12 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                     <input
                       type="tel"
                       required
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      maxLength={15}
                       placeholder="(11) 99999-9999"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(formatPhoneBR(e.target.value))}
                       className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400 shadow-inner"
                     />
                   </div>

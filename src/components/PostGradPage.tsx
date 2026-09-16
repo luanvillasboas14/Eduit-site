@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { POSTGRAD_COURSES } from '../data/courses';
+import { useCourses } from '../lib/courses';
 import { Course } from '../types';
 import coursesBannerImg from '../assets/images/pos grad.jpg';
 import { 
@@ -42,6 +42,7 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
   const [sortBy, setSortBy] = useState<string>('populares');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
+  const { courses, loading, error } = useCourses('pos');
 
   useEffect(() => {
     setSearchQuery(initialSearchQuery);
@@ -70,15 +71,15 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
 
   // Count courses per category in Pós-graduação
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { Todos: POSTGRAD_COURSES.length };
-    POSTGRAD_COURSES.forEach((course) => {
+    const counts: Record<string, number> = { Todos: courses.length };
+    courses.forEach((course) => {
       counts[course.category] = (counts[course.category] || 0) + 1;
     });
     return counts;
-  }, []);
+  }, [courses]);
 
   const filteredAndSortedCourses = useMemo(() => {
-    let result = POSTGRAD_COURSES.filter((course) => {
+    let result = courses.filter((course) => {
       const matchesCategory =
         selectedCategory === 'Todos' || course.category === selectedCategory;
 
@@ -104,7 +105,7 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
     }
 
     return result;
-  }, [selectedCategory, searchQuery, sortBy, titleIncludes]);
+  }, [courses, selectedCategory, searchQuery, sortBy, titleIncludes]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');
@@ -317,7 +318,11 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
             </div>
 
             {/* Courses Cards Grid */}
-            {filteredAndSortedCourses.length === 0 ? (
+            {loading || error ? (
+              <div className="bg-[#0b1329] border border-slate-800 rounded-3xl p-12 text-center text-slate-300 text-sm">
+                {loading ? 'Carregando cursos...' : error}
+              </div>
+            ) : filteredAndSortedCourses.length === 0 ? (
               <div className="bg-[#0b1329] border border-slate-800 rounded-3xl p-12 text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mx-auto text-slate-500">
                   <Search className="w-8 h-8 text-yellow-400" />

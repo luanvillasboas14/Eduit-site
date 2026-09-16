@@ -1,11 +1,24 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import express from 'express';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, type Plugin} from 'vite';
+import {createCursosRouter} from './server/cursos.js';
+
+function cursosApiPlugin(): Plugin {
+  const api = express();
+  api.use('/api/cursos', createCursosRouter());
+  return {
+    name: 'cursos-api',
+    configureServer(server) {
+      server.middlewares.use(api);
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), cursosApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

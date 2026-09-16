@@ -1,3 +1,18 @@
+export interface CourseContentItem {
+  title: string;
+  description?: string;
+}
+
+export interface CourseOffer {
+  id?: number;
+  chave?: string;
+  duration: string;
+  installments?: number;
+  modality: string;
+  formation?: string;
+  price: number;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -14,6 +29,14 @@ export interface Course {
   modality: string; // e.g. '100% Online (EAD)'
   modules: string[];
   careerOpportunities: string[];
+  formation?: string;
+  featured?: boolean;
+  jobMarket?: string;
+  audienceText?: string;
+  moduleDetails?: CourseContentItem[];
+  audience?: CourseContentItem[];
+  careerDetails?: CourseContentItem[];
+  offers?: CourseOffer[];
 }
 
 export interface Professor {

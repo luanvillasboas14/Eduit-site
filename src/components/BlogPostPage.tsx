@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
 import { fetchRelatedPosts } from '../lib/supabase';
 import { wixBlogCategoryLabel } from '../data/siteUrls';
-import { submitLead } from '../lib/leads';
+import { formatPhoneBR, submitLead } from '../lib/leads';
 import {
   ChevronRight,
   ArrowLeft,
@@ -311,9 +311,12 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                     <input
                       type="tel"
                       required
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      maxLength={15}
                       placeholder="(11) 99999-9999"
                       value={leadPhone}
-                      onChange={(e) => setLeadPhone(e.target.value)}
+                      onChange={(e) => setLeadPhone(formatPhoneBR(e.target.value))}
                       className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400 shadow-inner"
                     />
                   </div>

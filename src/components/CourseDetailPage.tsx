@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Course, Polo } from '../types';
-import { COURSES_DATA } from '../data/courses';
+import { formatBRL, originalFromPrice, previewText, splitParagraphs, useCourses } from '../lib/courses';
 import { POLOS_DATA } from '../data/polos';
-import { leadTipoFromCourse, submitLead } from '../lib/leads';
+import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
 import {
   Star,
   Clock,
@@ -33,7 +33,8 @@ import {
   ExternalLink,
   Phone,
   Navigation,
-  Info
+  Info,
+  MessageCircle
 } from 'lucide-react';
 
 interface CourseDetailPageProps {
@@ -72,6 +73,10 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   // Polo search filter state
   const [poloSearch, setPoloSearch] = useState('');
   const [selectedCityFilter, setSelectedCityFilter] = useState<string>('todos');
+  const [selectedOfferIndex, setSelectedOfferIndex] = useState(0);
+  const { courses: catalogCourses } = useCourses(
+    course.categoryBadge === 'PÓS-GRADUAÇÃO' ? 'pos' : 'graduacao',
+  );
 
   const isPostGrad = course.categoryBadge === 'PÓS-GRADUAÇÃO' || course.category === 'Pós-Graduação';
 
@@ -97,6 +102,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     setActiveTab('overview');
     setPoloSearch('');
     setSelectedCityFilter('todos');
+    setSelectedOfferIndex(0);
   }, [course.id]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -145,20 +151,30 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   }, [poloSearch, selectedCityFilter]);
 
   // Find related courses in the same category or similar
-  const relatedCourses = COURSES_DATA.filter(
+  const relatedCourses = catalogCourses.filter(
     (c) => c.id !== course.id && (c.category === course.category || c.categoryBadge === course.categoryBadge)
   ).slice(0, 3);
 
-  // If no related in category, fallback to other popular courses
-  const displayRelated = relatedCourses.length > 0 
-    ? relatedCourses 
-    : COURSES_DATA.filter((c) => c.id !== course.id).slice(0, 3);
+  const displayRelated = relatedCourses.length > 0
+    ? relatedCourses
+    : catalogCourses.filter((c) => c.id !== course.id).slice(0, 3);
 
-  const calculateDiscount = () => {
-    if (!course.originalPrice) return 60;
-    const diff = course.originalPrice - course.price;
-    return Math.round((diff / course.originalPrice) * 100);
-  };
+  const selectedOffer = course.offers?.[selectedOfferIndex] ?? course.offers?.[0];
+  const displayDuration = selectedOffer?.duration || course.duration;
+  const displayModality = selectedOffer?.modality || course.modality || 'EAD';
+  const displayPrice = selectedOffer?.price || course.price;
+  const displayFormation = selectedOffer?.formation || course.formation || 'Bacharelado';
+  const moduleItems = course.moduleDetails?.length
+    ? course.moduleDetails
+    : course.modules.map((title) => ({ title }));
+  const audienceItems = course.audience?.length ? course.audience : [];
+  const careerItems = course.careerDetails?.length
+    ? course.careerDetails
+    : course.careerOpportunities.map((title) => ({ title }));
+  const aboutParagraphs = splitParagraphs(course.description);
+  const heroDescription = isPostGrad
+    ? course.description
+    : previewText(course.description, 220);
 
   return (
     <div className="bg-slate-100 min-h-screen text-slate-900 pb-6 sm:pb-12 lg:pb-20">
@@ -212,7 +228,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                 </h1>
 
                 <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-2xl">
-                  {course.description}
+                  {heroDescription}
                 </p>
 
                 {/* Quick Stat Chips */}
@@ -223,7 +239,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                       <span>Duração</span>
                     </div>
                     <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                      {course.duration}
+                      {displayDuration}
                     </span>
                   </div>
 
@@ -257,7 +273,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                           <span>Formação</span>
                         </div>
                         <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                          Bacharelado
+                          {displayFormation}
                         </span>
                       </div>
 
@@ -267,12 +283,31 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                           <span>Modalidade</span>
                         </div>
                         <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                          {course.modality || 'EAD'}
+                          {displayModality}
                         </span>
                       </div>
                     </>
                   )}
                 </div>
+
+                {course.offers && course.offers.length > 1 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {course.offers.map((offer, index) => (
+                      <button
+                        key={`${offer.duration}-${offer.formation}-${index}`}
+                        type="button"
+                        onClick={() => setSelectedOfferIndex(index)}
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors cursor-pointer ${
+                          selectedOfferIndex === index
+                            ? 'bg-yellow-400 text-slate-950 border-yellow-400'
+                            : 'bg-white text-slate-700 border-slate-300 hover:border-yellow-400'
+                        }`}
+                      >
+                        {[offer.duration, offer.formation].filter(Boolean).join(' · ')}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="pt-3">
@@ -358,35 +393,65 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     <span>Sobre a Formação em {course.title}</span>
                   </h3>
 
-                  <p className="text-sm text-slate-700 leading-relaxed">
-                    O curso de <strong className="text-slate-950">{course.title}</strong> da Cruzeiro do Sul Virtual oferece uma preparação de alto nível projetada para atender às demandas reais e dinâmicas do mercado profissional. Com metodologia interativa e flexibilidade de horários, você estuda no seu próprio ritmo com apoio integral de professores e tutores especializados.
-                  </p>
-
-                  {isAboutExpanded && (
-                    <div className="space-y-4 animate-fadeIn">
+                  {!isPostGrad && aboutParagraphs.length > 0 ? (
+                    <>
                       <p className="text-sm text-slate-700 leading-relaxed">
-                        Durante a sua jornada acadêmica, você desenvolverá competências técnicas essenciais, raciocínio crítico, visão estratégica e habilidade prática, utilizando uma plataforma virtual moderna e recursos educacionais digitais de última geração.
+                        {aboutParagraphs[0]}
                       </p>
+                      {isAboutExpanded && aboutParagraphs.length > 1 && (
+                        <div className="space-y-4 animate-fadeIn">
+                          {aboutParagraphs.slice(1).map((paragraph, index) => (
+                            <p key={index} className="text-sm text-slate-700 leading-relaxed">
+                              {paragraph}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      {aboutParagraphs.length > 1 && (
+                        <button
+                          onClick={() => setIsAboutExpanded(!isAboutExpanded)}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-600 hover:text-yellow-700 transition-colors pt-1 cursor-pointer"
+                        >
+                          <span>{isAboutExpanded ? 'Ler menos' : 'Ler mais'}</span>
+                          {isAboutExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
                       <p className="text-sm text-slate-700 leading-relaxed">
-                        Além disso, a matriz curricular integra módulos práticos e atualizados, direcionados para os principais desafios da carreira, garantindo que você se forme pronto para atuar em grandes empresas, organizações públicas ou no próprio empreendimento.
+                        O curso de <strong className="text-slate-950">{course.title}</strong> da Cruzeiro do Sul Virtual oferece uma preparação de alto nível projetada para atender às demandas reais e dinâmicas do mercado profissional. Com metodologia interativa e flexibilidade de horários, você estuda no seu próprio ritmo com apoio integral de professores e tutores especializados.
                       </p>
-                    </div>
+                      {isAboutExpanded && (
+                        <div className="space-y-4 animate-fadeIn">
+                          <p className="text-sm text-slate-700 leading-relaxed">
+                            Durante a sua jornada acadêmica, você desenvolverá competências técnicas essenciais, raciocínio crítico, visão estratégica e habilidade prática, utilizando uma plataforma virtual moderna e recursos educacionais digitais de última geração.
+                          </p>
+                          <p className="text-sm text-slate-700 leading-relaxed">
+                            Além disso, a matriz curricular integra módulos práticos e atualizados, direcionados para os principais desafios da carreira, garantindo que você se forme pronto para atuar em grandes empresas, organizações públicas ou no próprio empreendimento.
+                          </p>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setIsAboutExpanded(!isAboutExpanded)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-600 hover:text-yellow-700 transition-colors pt-1 cursor-pointer"
+                      >
+                        <span>{isAboutExpanded ? 'Ler menos' : 'Ler mais'}</span>
+                        {isAboutExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </button>
+                    </>
                   )}
-
-                  <button
-                    onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-600 hover:text-yellow-700 transition-colors pt-1 cursor-pointer"
-                  >
-                    <span>{isAboutExpanded ? 'Ler menos' : 'Ler mais'}</span>
-                    {isAboutExpanded ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </button>
                 </div>
 
-                {/* Modules Overview (Gray Card) */}
+                {moduleItems.length > 0 && (
                 <div className="bg-slate-100 text-slate-900 border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl overflow-hidden">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -398,9 +463,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     </span>
                   </div>
 
-                  {/* Cards: Horizontal swipe carousel on mobile with peek preview, standard 2-column grid on desktop */}
                   <div className="flex sm:grid sm:grid-cols-2 gap-4 pt-2 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0 -mx-6 px-[8.333%] sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-none">
-                    {course.modules.map((moduleItem, index) => (
+                    {moduleItems.map((moduleItem, index) => (
                       <div
                         key={index}
                         className="w-[76vw] min-w-[76vw] max-w-[290px] xs:w-[280px] xs:min-w-[280px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm shrink-0 sm:shrink hover:border-yellow-400 transition-colors"
@@ -410,9 +474,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                             {index + 1}
                           </div>
                           <div className="space-y-1">
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{moduleItem}</h4>
-                            <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                              Conteúdo prático orientado a desafios reais do mercado e exigências profissionais.
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{moduleItem.title}</h4>
+                            <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed line-clamp-3">
+                              {moduleItem.description || 'Conteúdo prático orientado a desafios reais do mercado e exigências profissionais.'}
                             </p>
                           </div>
                         </div>
@@ -420,6 +484,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     ))}
                   </div>
                 </div>
+                )}
 
                 {/* CTA Button: Ver Preço */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
@@ -452,13 +517,14 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     <span>Grade Curricular e Módulos de Aprendizagem</span>
                   </h3>
                   <p className="text-xs text-slate-600">
-                    Sua formação em <strong className="text-slate-950">{course.title}</strong> é estruturada de forma progressiva ao longo de <strong className="text-yellow-600 font-bold">{course.duration}</strong>.
+                    Sua formação em <strong className="text-slate-950">{course.title}</strong> é estruturada de forma progressiva ao longo de <strong className="text-yellow-600 font-bold">{displayDuration}</strong>.
                   </p>
                 </div>
 
                 <div className="space-y-4">
-                  {course.modules.map((moduleName, idx) => {
+                  {moduleItems.map((moduleItem, idx) => {
                     const isExpanded = !!expandedSemesters[idx];
+                    const moduleName = moduleItem.title;
                     return (
                       <div
                         key={idx}
@@ -562,7 +628,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {course.careerOpportunities.map((career, i) => (
+                    {careerItems.map((career, i) => (
                       <div
                         key={i}
                         className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-yellow-400 transition-all flex items-start gap-3 shadow-sm"
@@ -571,9 +637,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                           <Award className="w-4 h-4" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-slate-900">{career}</h4>
+                          <h4 className="text-sm font-bold text-slate-900">{career.title}</h4>
                           <p className="text-xs text-slate-600 mt-1">
-                            Atuação estratégica em empresas privadas, órgãos públicos, consultorias e negócios próprios.
+                            {career.description || 'Atuação estratégica em empresas privadas, órgãos públicos, consultorias e negócios próprios.'}
                           </p>
                         </div>
                       </div>
@@ -595,6 +661,35 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
                   {/* Cards: Horizontal swipe carousel on mobile with peek preview, standard 2-column grid on desktop */}
                   <div className="flex sm:grid sm:grid-cols-2 gap-4 pt-2 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0 -mx-6 px-[8.333%] sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-none">
+                    {audienceItems.length > 0 ? (
+                      audienceItems.map((item, index) => (
+                        <div
+                          key={index}
+                          className="w-[76vw] min-w-[76vw] max-w-[290px] xs:w-[280px] xs:min-w-[280px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm shrink-0 sm:shrink hover:border-yellow-400 transition-colors"
+                        >
+                          <div className="flex items-start gap-3.5">
+                            <div className="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-700 flex items-center justify-center shrink-0 mt-0.5">
+                              <Target className="w-4 h-4" />
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">{item.title}</h4>
+                              {item.description && (
+                                <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : course.audienceText ? (
+                      <div className="w-full bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                          {course.audienceText}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
                     <div className="w-[76vw] min-w-[76vw] max-w-[290px] xs:w-[280px] xs:min-w-[280px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm shrink-0 sm:shrink hover:border-yellow-400 transition-colors">
                       <div className="flex items-start gap-3.5">
                         <div className="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-700 flex items-center justify-center shrink-0 mt-0.5">
@@ -608,48 +703,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                         </div>
                       </div>
                     </div>
-
-                    <div className="w-[76vw] min-w-[76vw] max-w-[290px] xs:w-[280px] xs:min-w-[280px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm shrink-0 sm:shrink hover:border-yellow-400 transition-colors">
-                      <div className="flex items-start gap-3.5">
-                        <div className="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-700 flex items-center justify-center shrink-0 mt-0.5">
-                          <Clock className="w-4 h-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Busca por Flexibilidade de Horários</h4>
-                          <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                            Para quem precisa conciliar os estudos com a rotina de trabalho e compromissos pessoais através do ensino 100% online.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="w-[76vw] min-w-[76vw] max-w-[290px] xs:w-[280px] xs:min-w-[280px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm shrink-0 sm:shrink hover:border-yellow-400 transition-colors">
-                      <div className="flex items-start gap-3.5">
-                        <div className="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-700 flex items-center justify-center shrink-0 mt-0.5">
-                          <GraduationCap className="w-4 h-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Egressos do Ensino Médio</h4>
-                          <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                            Jovens que buscam um primeiro diploma de ensino superior com reconhecimento oficial do MEC e diploma valorizado.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="w-[76vw] min-w-[76vw] max-w-[290px] xs:w-[280px] xs:min-w-[280px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm shrink-0 sm:shrink hover:border-yellow-400 transition-colors">
-                      <div className="flex items-start gap-3.5">
-                        <div className="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-700 flex items-center justify-center shrink-0 mt-0.5">
-                          <UserCheck className="w-4 h-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">Autônomos e Empreendedores</h4>
-                          <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                            Profissionais que desejam adquirir conhecimentos práticos e fundamentação teórica sólida para aplicar no seu próprio negócio.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
 
                   {/* CTA Button: Ver Preço */}
@@ -695,22 +750,56 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
               </div>
 
               {isSubmitted ? (
-                <div className="relative z-10 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center mx-auto shadow-md">
+                <div className="relative z-10 bg-slate-900/90 border-2 border-yellow-400/50 rounded-2xl p-5 text-center space-y-4 shadow-xl animate-fadeIn">
+                  <div className="w-12 h-12 rounded-full bg-yellow-400 text-slate-950 flex items-center justify-center mx-auto shadow-md">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
-                  <h4 className="text-base font-bold text-white">
-                    Solicitação Enviada com Sucesso!
-                  </h4>
-                  <p className="text-xs text-slate-300">
-                    Obrigado, <strong className="text-white">{name}</strong>. Nosso consultor educacional entrará em contato via WhatsApp no número informado para finalizar sua bolsa.
-                  </p>
-                  <button
-                    onClick={() => setIsSubmitted(false)}
-                    className="text-xs font-bold text-yellow-400 hover:underline pt-2 block mx-auto cursor-pointer"
-                  >
-                    Fazer nova solicitação
-                  </button>
+                  <div>
+                    <span className="bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider inline-block mb-1">
+                      Bolsa Promocional Liberada
+                    </span>
+                    <p className="text-xs text-slate-300 mt-1">
+                      Olá, <strong className="text-white">{name}</strong>! Confira a condição exclusiva do curso:
+                    </p>
+                  </div>
+
+                  <div className="bg-[#0b1329] border border-yellow-400/30 rounded-xl p-3.5 text-center">
+                    {displayPrice > 0 && (
+                      <span className="text-[11px] text-slate-400 line-through block">
+                        De {formatBRL(originalFromPrice(displayPrice, course.originalPrice))}
+                      </span>
+                    )}
+                    <div className="flex items-baseline justify-center gap-1 mt-0.5">
+                      <span className="text-xs font-bold text-yellow-400">Por</span>
+                      <span className="text-2xl font-black text-white">
+                        {displayPrice > 0 ? formatBRL(displayPrice) : 'Consulte'}
+                      </span>
+                      <span className="text-xs text-slate-400 font-medium">/mês</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-400 font-semibold block mt-1">
+                      ✓ Desconto garantido até o final do curso
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 pt-1">
+                    <a
+                      href={`https://wa.cruzeiroead.com.br/tronco?text=${encodeURIComponent(
+                        `Olá! Meu nome é ${name}. Acabei de consultar o valor da mensalidade do curso de ${course.title} (${displayPrice > 0 ? `${formatBRL(displayPrice)}/mês` : 'consulte'}) no site e gostaria de conversar com um consultor para garantir minha bolsa!`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/20 transition-all cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-slate-950" />
+                      <span>Conversar com um Consultor no WhatsApp</span>
+                    </a>
+                    <button
+                      onClick={() => setIsSubmitted(false)}
+                      className="text-xs text-slate-400 hover:text-white underline cursor-pointer pt-1 block mx-auto"
+                    >
+                      Fazer nova solicitação
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleFormSubmit} className="relative z-10 space-y-3">
@@ -735,9 +824,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     <input
                       type="tel"
                       required
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      maxLength={15}
                       placeholder="(11) 99999-9999"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(formatPhoneBR(e.target.value))}
                       className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400 shadow-inner"
                     />
                   </div>
@@ -1022,7 +1114,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                       {relCourse.title}
                     </h3>
                     <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {relCourse.description}
+                      {previewText(relCourse.description)}
                     </p>
                   </div>
                 </div>

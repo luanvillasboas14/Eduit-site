@@ -1,5 +1,5 @@
 import React from 'react';
-import { FEATURED_COURSES } from '../data/courses';
+import { useCourses } from '../lib/courses';
 import { Course } from '../types';
 import { Clock, ArrowRight } from 'lucide-react';
 
@@ -13,6 +13,10 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
   onSelectCourse,
   onNavigateToCourses,
 }) => {
+  const { courses, loading } = useCourses('graduacao');
+  const featured = courses.filter((course) => course.featured).slice(0, 4);
+  const displayCourses = featured.length > 0 ? featured : courses.slice(0, 4);
+
   return (
     <section id="cursos" className="bg-slate-100 pt-6 sm:pt-10 pb-8 sm:pb-12 border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,8 +44,13 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
         </div>
 
         {/* Courses Cards: Horizontal swipe carousel on mobile with peek preview, standard responsive grid on tablet/desktop */}
+        {loading ? (
+          <div className="bg-[#0b1329] border border-slate-800 rounded-2xl p-10 text-center text-slate-300 text-sm mb-6">
+            Carregando cursos...
+          </div>
+        ) : (
         <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0 pt-1 -mx-4 px-[8.333%] sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-none">
-          {FEATURED_COURSES.map((course) => (
+          {displayCourses.map((course) => (
             <div
               key={course.id}
               className="w-[76vw] min-w-[76vw] max-w-[280px] xs:w-[270px] xs:min-w-[270px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-[#0b1329] border-2 sm:border-[3px] border-slate-800 hover:border-yellow-400 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col group hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/15 shrink-0 sm:shrink"
@@ -106,8 +115,7 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
             </div>
           ))}
         </div>
-
-        {/* Bottom View All Button (Mobile Centered) */}
+        )}
         {onNavigateToCourses && (
           <div className="flex justify-center">
             <button
