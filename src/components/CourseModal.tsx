@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Course } from '../types';
 import { formatBRL, originalFromPrice } from '../lib/courses';
 import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
+import { trackFormSubmit } from '../lib/analytics';
 import { X, CheckCircle2, Clock, Star, Award, GraduationCap, ArrowRight, MessageCircle } from 'lucide-react';
 
 interface CourseModalProps {
@@ -37,6 +38,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({
         celular: studentPhone,
         tipo: leadTipoFromCourse(course.title, course.categoryBadge === 'PÓS-GRADUAÇÃO'),
       });
+      trackFormSubmit('curso_modal', { course_id: course.id, course_title: course.title });
       setEnrolled(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');
@@ -60,7 +62,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({
         <div className="relative h-48 sm:h-56">
           <img
             src={course.image}
-            alt={course.title}
+            alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/50 to-transparent" />

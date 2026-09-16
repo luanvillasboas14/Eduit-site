@@ -19,7 +19,7 @@ export const Hero: React.FC<HeroProps> = ({
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
           src={bannerImg}
-          alt="Cruzeiro do Sul Virtual - Banner Oficial"
+          alt=""
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-right md:object-center opacity-90 filter brightness-100 contrast-105"
         />

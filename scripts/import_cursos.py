@@ -7,6 +7,7 @@ import csv
 import json
 import os
 import re
+import sys
 import unicodedata
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -160,30 +161,6 @@ def map_category(raw: object, mapping: dict[str, str], fallback: str) -> str:
     return mapping.get(key, fallback)
 
 
-def duration_for_grad(title: str, formacao: str | None) -> str:
-    hay = norm(title)
-    long_keywords = (
-        "engenharia",
-        "direito",
-        "psicologia",
-        "farmacia",
-        "enfermagem",
-        "arquitetura",
-        "medicina",
-        "odontologia",
-        "fisioterapia",
-        "nutricao",
-        "veterinaria",
-        "zootecnia",
-        "agronomia",
-    )
-    if formacao == "Tecnólogo":
-        return "5 semestres"
-    if any(word in hay for word in long_keywords) and formacao != "Licenciatura":
-        return "10 semestres"
-    return "8 semestres"
-
-
 def parse_chave(chave: object, modalidade_col: object) -> tuple[str | None, str]:
     text = str(chave or "")
     lowered = text.lower()
@@ -219,10 +196,125 @@ def find_xlsx() -> Path:
 def find_csv() -> Path:
     matches = list(DOWNLOADS.glob("preço*.csv")) + list(DOWNLOADS.glob("preco*.csv"))
     if not matches:
-        matches = [p for p in DOWNLOADS.glob("*.csv") if "gradua" in p.name.lower()]
+        matches = [
+            p
+            for p in DOWNLOADS.glob("*.csv")
+            if "preco" in p.name.lower() or "preço" in p.name.lower() or "preco+" in p.name.lower()
+        ]
     if not matches:
         raise FileNotFoundError("CSV de preços não encontrado em Downloads")
     return matches[0]
+
+
+def find_wix_graduacao() -> Path:
+    candidates = [DOWNLOADS / "graduacao.csv", ROOT / "graduacao.csv"]
+    for path in candidates:
+        if path.exists():
+            return path
+    raise FileNotFoundError("CSV do CMS Wix (graduacao.csv) não encontrado em Downloads")
+
+
+def csv_get(row: dict[str, str], *names: str) -> str:
+    folded = {re.sub(r"\s+", " ", key).strip().lower(): key for key in row}
+    for name in names:
+        key = folded.get(name.strip().lower())
+        if key and str(row.get(key) or "").strip():
+            return str(row[key]).strip()
+    return ""
+
+
+def normalize_duracao(value: object) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    match = re.search(r"(\d+)\s*semestres?", text, re.I)
+    if match:
+        return f"{match.group(1)} semestres"
+    return text
+
+
+def load_wix_graduacao(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        return [row for row in csv.DictReader(handle) if csv_get(row, "Curso")]
+
+
+def wix_grad_fields(row: dict[str, str]) -> dict:
+    title = csv_get(row, "Curso")
+    classificacao = csv_get(row, "Classificação")
+    categoria = map_category(classificacao, GRAD_CATEGORY, classificacao or "Outros")
+    semi = csv_get(row, "Semipresencial").lower() == "sim"
+    chave = csv_get(row, "Chave 1")
+    _, chave_mod = parse_chave(chave, "Semipresencial" if semi else "")
+    duracao = normalize_duracao(csv_get(row, "Duração"))
+    url_path = csv_get(row, "Graduacao- cursos")
+    if url_path and not url_path.startswith("/"):
+        url_path = f"/{url_path}"
+    image = csv_get(row, "Image")
+    area = csv_get(row, "area de atuação")
+    return {
+        "titulo": title,
+        "categoria": categoria,
+        "categoria_raw": classificacao,
+        "category_badge": categoria.upper(),
+        "sobre": csv_get(row, "Descrição") or None,
+        "imagem": image if is_image_url(image) else None,
+        "url_path": url_path or None,
+        "formacao": csv_get(row, "Formação") or None,
+        "duracao": duracao,
+        "modalidade": "Semipresencial" if semi else chave_mod or "EAD",
+        "meta_title": csv_get(row, "META TITLLE", "META TITLE") or None,
+        "meta_description": csv_get(row, "META DESCRIPTION") or None,
+        "img_alt": csv_get(row, "IMG alt text") or title,
+        "mercado_trabalho": csv_get(row, "Mercado de Trabalho") or None,
+        "area_atuacao_texto": area or None,
+        "areas_atuacao": json.dumps(bullets(area), ensure_ascii=False),
+    }
+
+
+def sync_wix_graduacao(cur, rows: list[dict[str, str]]) -> tuple[int, list[str]]:
+    cur.execute("SELECT id, titulo FROM cursos WHERE tipo = 'graduacao'")
+    by_title = {norm(title): course_id for course_id, title in cur.fetchall()}
+    updated = 0
+    missing: list[str] = []
+    for row in rows:
+        fields = wix_grad_fields(row)
+        key = NAME_ALIASES.get(norm(fields["titulo"]), norm(fields["titulo"]))
+        course_id = by_title.get(key) or by_title.get(norm(fields["titulo"]))
+        if course_id is None:
+            missing.append(fields["titulo"])
+            continue
+        cur.execute(
+            """
+            UPDATE cursos SET
+              categoria = %(categoria)s,
+              categoria_raw = %(categoria_raw)s,
+              category_badge = %(category_badge)s,
+              sobre = COALESCE(%(sobre)s, sobre),
+              imagem = COALESCE(%(imagem)s, imagem),
+              url_path = COALESCE(%(url_path)s, url_path),
+              formacao = COALESCE(%(formacao)s, formacao),
+              duracao = %(duracao)s,
+              modalidade = %(modalidade)s,
+              meta_title = COALESCE(%(meta_title)s, meta_title),
+              meta_description = COALESCE(%(meta_description)s, meta_description),
+              img_alt = COALESCE(%(img_alt)s, img_alt),
+              mercado_trabalho = COALESCE(%(mercado_trabalho)s, mercado_trabalho),
+              area_atuacao_texto = COALESCE(%(area_atuacao_texto)s, area_atuacao_texto),
+              areas_atuacao = CASE
+                WHEN %(areas_atuacao)s = '[]' THEN areas_atuacao
+                ELSE %(areas_atuacao)s::jsonb
+              END
+            WHERE id = %(id)s
+            """,
+            {**fields, "id": course_id},
+        )
+        if fields["duracao"]:
+            cur.execute(
+                "UPDATE curso_ofertas SET duracao = %s WHERE curso_id = %s",
+                (fields["duracao"], course_id),
+            )
+        updated += 1
+    return updated, missing
 
 
 def load_prices(csv_path: Path) -> dict[str, list[dict]]:
@@ -347,9 +439,10 @@ def import_graduacao(ws, prices: dict[str, list[dict]], cur, used_slugs: set[str
         primary = offers[0] if offers else {}
         formacao = primary.get("formacao")
         modalidade = primary.get("modalidade") or "EAD"
-        duracao = duration_for_grad(title, formacao)
+        duracao = None
         for offer in offers:
-            offer["duracao"] = duracao
+            if not offer.get("duracao"):
+                offer["duracao"] = duracao
         categoria_raw = str(row[16] or "").strip()
         categoria = map_category(categoria_raw, GRAD_CATEGORY, categoria_raw or "Outros")
         payload = {
@@ -446,6 +539,28 @@ def import_pos(ws, cur, used_slugs: set[str]) -> int:
 
 
 def main() -> None:
+    if "--sync-wix-grad" in sys.argv:
+        wix_path = find_wix_graduacao()
+        print("Wix CMS:", wix_path)
+        rows = load_wix_graduacao(wix_path)
+        conn = db_connect()
+        conn.autocommit = False
+        try:
+            with conn.cursor() as cur:
+                updated, missing = sync_wix_graduacao(cur, rows)
+            conn.commit()
+            print(f"Graduação atualizada do CMS: {updated}/{len(rows)}")
+            if missing:
+                print("Sem match no banco:")
+                for title in missing:
+                    print(f"  - {title}")
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+        return
+
     xlsx = find_xlsx()
     csv_path = find_csv()
     print("Excel:", xlsx)

@@ -1,6 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Polo, Course } from '../types';
 import { previewText, useCourses } from '../lib/courses';
+import { pickNearbyPolos, pickPoloCourses } from '../lib/recommendations';
+import { seoForPolo } from '../lib/seo';
+import { Seo } from './Seo';
+import { trackFormSubmit } from '../lib/analytics';
 import { POLOS_DATA } from '../data/polos';
 import { PoloGoogleReviews } from './PoloGoogleReviews';
 import { formatPhoneBR, submitLead } from '../lib/leads';
@@ -73,11 +77,10 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
   // Related Courses to feature on the polo page in fluid carousel
   const { courses: graduationCourses } = useCourses('graduacao');
   const { courses: postgradCourses } = useCourses('pos');
-  const featuredGradCourses = graduationCourses.slice(0, 8);
-  const featuredPostCourses = postgradCourses.slice(0, 6);
+  const featuredGradCourses = pickPoloCourses(polo, graduationCourses, 8);
+  const featuredPostCourses = pickPoloCourses(polo, postgradCourses, 6);
 
-  // Other polos in the network
-  const otherPolos = POLOS_DATA.filter((p) => p.id !== polo.id).slice(0, 6);
+  const otherPolos = pickNearbyPolos(polo, POLOS_DATA, 6);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +94,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
         celular: phone,
         tipo: 'Graduação',
       });
+      trackFormSubmit('polo_contato', { polo_name: polo.name });
       setIsSubmitted(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');
@@ -101,6 +105,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
 
   return (
     <div className="bg-slate-100 min-h-screen pt-4 sm:pt-6 pb-8 sm:pb-16 overflow-x-hidden w-full">
+      <Seo {...seoForPolo(polo)} />
       {/* Breadcrumbs & Return Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
         <div className="flex items-center justify-between gap-3 text-xs">
@@ -302,7 +307,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                 <div className="relative rounded-2xl overflow-hidden aspect-[16/9] sm:aspect-[21/9] bg-slate-900 shadow-md">
                   <img
                     src={polo.image}
-                    alt={polo.name}
+                    alt={`Fachada do ${polo.name} em ${polo.city}`}
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
@@ -766,7 +771,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                       {other.image ? (
                         <img
                           src={other.image}
-                          alt={other.name}
+                          alt={`Miniatura do ${other.name} em ${other.city}`}
                           loading="lazy"
                           referrerPolicy="no-referrer"
                           className="w-14 h-14 rounded-xl object-cover shrink-0 border border-slate-200 group-hover:scale-105 transition-transform duration-300"

@@ -7,6 +7,7 @@ export const PATHS = {
   graduacao: '/graduacao',
   posGraduacao: '/pos-graduacao',
   blog: '/blog',
+  busca: '/busca',
 } as const;
 
 export type BlogCategory = {

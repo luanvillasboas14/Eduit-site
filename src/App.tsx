@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { FeaturedCourses } from './components/FeaturedCourses';
@@ -12,6 +12,9 @@ import { NewsSection } from './components/NewsSection';
 import { NewsPage } from './components/NewsPage';
 import { BlogPostPage } from './components/BlogPostPage';
 import { Footer } from './components/Footer';
+import { SearchPage } from './components/SearchPage';
+import { NotFoundPage } from './components/NotFoundPage';
+import { Seo } from './components/Seo';
 
 import { CourseModal } from './components/CourseModal';
 import { ConsultantModal } from './components/ConsultantModal';
@@ -23,6 +26,8 @@ import { Course, NewsArticle, Polo } from './types';
 import { fetchBlogPost } from './lib/supabase';
 import { fetchCourseBySlug } from './lib/courses';
 import { captureGclidFromUrl } from './lib/leads';
+import { initAnalytics, trackCta, trackCourseClick, trackPageView, trackPoloClick } from './lib/analytics';
+import { seoForBlogCategory, seoForPath } from './lib/seo';
 import {
   BLOG_CATEGORIES,
   GRAD_CATEGORY_BY_NAME,
@@ -34,7 +39,6 @@ import {
   blogCategoryPath,
   coursePath,
   findPoloBySlug,
-  isListingPath,
   isPostgradCourse,
   poloPath,
   postPath,
@@ -45,38 +49,43 @@ function ScrollToTop() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     captureGclidFromUrl();
+    trackPageView(`${pathname}${search}`);
   }, [pathname, search]);
   return null;
 }
 
 export default function App() {
   const navigate = useNavigate();
-  const location = useLocation();
+
   const [modalCourse, setModalCourse] = useState<Course | null>(null);
   const [isConsultantOpen, setIsConsultantOpen] = useState<boolean>(false);
   const [consultantCourseTitle, setConsultantCourseTitle] = useState<string>('');
   const [consultantPoloName, setConsultantPoloName] = useState<string>('');
   const [isVideoOpen, setIsVideoOpen] = useState<boolean>(false);
-  const [headerSearchQuery, setHeaderSearchQuery] = useState<string>('');
+
+  useEffect(() => {
+    initAnalytics();
+  }, []);
 
   const handleOpenConsultant = (courseTitle: string = '', poloName: string = '') => {
+    trackCta(courseTitle || poloName ? 'consultar_valores' : 'fale_conosco');
     setConsultantCourseTitle(courseTitle);
     setConsultantPoloName(poloName);
     setIsConsultantOpen(true);
   };
 
   const handleHeaderSearch = (query: string) => {
-    setHeaderSearchQuery(query);
-    if (!isListingPath(location.pathname)) {
-      navigate(PATHS.graduacao);
-    }
+    const q = query.trim();
+    navigate(q ? `${PATHS.busca}?q=${encodeURIComponent(q)}` : PATHS.busca);
   };
 
   const handleSelectCourse = (course: Course) => {
+    trackCourseClick(course.title, course.id);
     navigate(coursePath(course));
   };
 
   const handleSelectPolo = (polo: Polo) => {
+    trackPoloClick(polo.name, polo.id);
     navigate(poloPath(polo));
   };
 
@@ -84,13 +93,14 @@ export default function App() {
     navigate(postPath(article));
   };
 
+  const homeSeo = seoForPath(PATHS.home);
+
   return (
     <div className="min-h-screen bg-[#070d19] text-slate-100 font-sans selection:bg-yellow-400 selection:text-slate-950">
       <ScrollToTop />
       <Header
         onOpenConsultant={() => handleOpenConsultant()}
         onSearch={handleHeaderSearch}
-        searchQuery={headerSearchQuery}
       />
 
       <main>
@@ -99,6 +109,7 @@ export default function App() {
             path={PATHS.home}
             element={
               <>
+                <Seo {...homeSeo} path={PATHS.home} />
                 <Hero
                   onOpenConsultant={() => handleOpenConsultant()}
                   onExploreCourses={() => navigate(PATHS.graduacao)}
@@ -120,31 +131,50 @@ export default function App() {
           />
 
           <Route
-            path={PATHS.blog}
+            path={PATHS.busca}
             element={
-              <NewsPage
+              <SearchPage
+                onSelectCourse={handleSelectCourse}
+                onSelectPolo={handleSelectPolo}
                 onSelectArticle={handleSelectArticle}
-                onOpenConsultant={() => handleOpenConsultant()}
                 onNavigateHome={() => navigate(PATHS.home)}
-                onCategoryChange={(category) => navigate(blogCategoryPath(category))}
               />
             }
           />
 
-          {BLOG_CATEGORIES.map((category) => (
-            <Route
-              key={category.path}
-              path={category.path}
-              element={
+          <Route
+            path={PATHS.blog}
+            element={
+              <>
+                <Seo {...seoForPath(PATHS.blog)} path={PATHS.blog} />
                 <NewsPage
                   onSelectArticle={handleSelectArticle}
                   onOpenConsultant={() => handleOpenConsultant()}
                   onNavigateHome={() => navigate(PATHS.home)}
-                  initialCategory={category.name}
-                  onCategoryChange={(name) => navigate(blogCategoryPath(name))}
+                  onCategoryChange={(category) => navigate(blogCategoryPath(category))}
                 />
+              </>
+            }
+          />
+
+          {BLOG_CATEGORIES.map((category) => (
+            <React.Fragment key={category.path}>
+            <Route
+              path={category.path}
+              element={
+                <>
+                  <Seo {...seoForBlogCategory(category.name)} path={category.path} />
+                  <NewsPage
+                    onSelectArticle={handleSelectArticle}
+                    onOpenConsultant={() => handleOpenConsultant()}
+                    onNavigateHome={() => navigate(PATHS.home)}
+                    initialCategory={category.name}
+                    onCategoryChange={(name) => navigate(blogCategoryPath(name))}
+                  />
+                </>
               }
             />
+            </React.Fragment>
           ))}
 
           <Route
@@ -160,72 +190,80 @@ export default function App() {
           <Route
             path={PATHS.graduacao}
             element={
-              <CoursesPage
-                onSelectCourse={handleSelectCourse}
-                onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
-                initialSearchQuery={headerSearchQuery}
-                onSearchChange={(q) => setHeaderSearchQuery(q)}
-                onCategoryChange={(cat) => navigate(GRAD_CATEGORY_BY_NAME[cat] ?? PATHS.graduacao)}
-                onClearFilters={() => navigate(PATHS.graduacao)}
-              />
+              <>
+                <Seo {...seoForPath(PATHS.graduacao)} path={PATHS.graduacao} />
+                <CoursesPage
+                  onSelectCourse={handleSelectCourse}
+                  onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
+                  onCategoryChange={(cat) => navigate(GRAD_CATEGORY_BY_NAME[cat] ?? PATHS.graduacao)}
+                  onClearFilters={() => navigate(PATHS.graduacao)}
+                />
+              </>
             }
           />
 
           {Object.entries(GRAD_CATEGORY_ROUTES).map(([path, filter]) => (
+            <React.Fragment key={path}>
             <Route
               path={path}
               element={
-                <CoursesPage
-                  onSelectCourse={handleSelectCourse}
-                  onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
-                  initialSearchQuery={headerSearchQuery}
-                  onSearchChange={(q) => setHeaderSearchQuery(q)}
-                  initialCategory={filter.category}
-                  initialModality={filter.modality ?? 'Todas'}
-                  titleIncludes={filter.titleIncludes}
-                  onCategoryChange={(cat) => navigate(GRAD_CATEGORY_BY_NAME[cat] ?? PATHS.graduacao)}
-                  onClearFilters={() => navigate(PATHS.graduacao)}
-                />
+                <>
+                  <Seo {...seoForPath(path)} path={path} />
+                  <CoursesPage
+                    onSelectCourse={handleSelectCourse}
+                    onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
+                    initialCategory={filter.category}
+                    initialModality={filter.modality ?? 'Todas'}
+                    titleIncludes={filter.titleIncludes}
+                    onCategoryChange={(cat) => navigate(GRAD_CATEGORY_BY_NAME[cat] ?? PATHS.graduacao)}
+                    onClearFilters={() => navigate(PATHS.graduacao)}
+                  />
+                </>
               }
             />
+            </React.Fragment>
           ))}
 
           <Route
             path={PATHS.posGraduacao}
             element={
-              <PostGradPage
-                onSelectCourse={handleSelectCourse}
-                onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
-                initialSearchQuery={headerSearchQuery}
-                onSearchChange={(q) => setHeaderSearchQuery(q)}
-                onCategoryChange={(cat) => {
-                  const next = POS_CATEGORY_BY_NAME[cat];
-                  if (next) navigate(next);
-                }}
-                onClearFilters={() => navigate(PATHS.posGraduacao)}
-              />
-            }
-          />
-
-          {Object.entries(POS_CATEGORY_ROUTES).map(([path, filter]) => (
-            <Route
-              path={path}
-              element={
+              <>
+                <Seo {...seoForPath(PATHS.posGraduacao)} path={PATHS.posGraduacao} />
                 <PostGradPage
                   onSelectCourse={handleSelectCourse}
                   onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
-                  initialSearchQuery={headerSearchQuery}
-                  onSearchChange={(q) => setHeaderSearchQuery(q)}
-                  initialCategory={filter.category}
-                  titleIncludes={filter.titleIncludes}
                   onCategoryChange={(cat) => {
                     const next = POS_CATEGORY_BY_NAME[cat];
                     if (next) navigate(next);
                   }}
                   onClearFilters={() => navigate(PATHS.posGraduacao)}
                 />
+              </>
+            }
+          />
+
+          {Object.entries(POS_CATEGORY_ROUTES).map(([path, filter]) => (
+            <React.Fragment key={path}>
+            <Route
+              path={path}
+              element={
+                <>
+                  <Seo {...seoForPath(path)} path={path} />
+                  <PostGradPage
+                    onSelectCourse={handleSelectCourse}
+                    onOpenConsultant={(courseTitle) => handleOpenConsultant(courseTitle)}
+                    initialCategory={filter.category}
+                    titleIncludes={filter.titleIncludes}
+                    onCategoryChange={(cat) => {
+                      const next = POS_CATEGORY_BY_NAME[cat];
+                      if (next) navigate(next);
+                    }}
+                    onClearFilters={() => navigate(PATHS.posGraduacao)}
+                  />
+                </>
               }
             />
+            </React.Fragment>
           ))}
 
           <Route
@@ -251,6 +289,7 @@ export default function App() {
           />
 
           {POLO_PATHS.map((path) => (
+            <React.Fragment key={path}>
             <Route
               path={path}
               element={
@@ -261,9 +300,10 @@ export default function App() {
                 />
               }
             />
+            </React.Fragment>
           ))}
 
-          <Route path="*" element={<Navigate to={PATHS.home} replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
 
@@ -338,7 +378,7 @@ function CourseDetailRoute({
   }
 
   if (!course || isPostgradCourse(course) !== isPosPath) {
-    return <Navigate to={isPosPath ? PATHS.posGraduacao : PATHS.graduacao} replace />;
+    return <NotFoundPage />;
   }
 
   return (
@@ -371,7 +411,7 @@ function PoloDetailRoute({
   const polo = findPoloBySlug(slug);
 
   if (!polo) {
-    return <Navigate to={PATHS.home} replace />;
+    return <NotFoundPage />;
   }
 
   return (
@@ -429,7 +469,7 @@ function BlogPostRoute({
   }
 
   if (status === 'missing' || !article) {
-    return <Navigate to={PATHS.blog} replace />;
+    return <NotFoundPage />;
   }
 
   return (

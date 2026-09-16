@@ -62,7 +62,7 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
               >
                 <img
                   src={course.image}
-                  alt={course.title}
+                  alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />
@@ -88,11 +88,15 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
                   </h3>
 
                   <div className="flex items-center gap-2 flex-wrap text-[11px] sm:text-xs text-slate-400">
-                    <div className="flex items-center gap-1 sm:gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{course.duration}</span>
-                    </div>
-                    <span>•</span>
+                    {course.duration ? (
+                      <>
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{course.duration}</span>
+                        </div>
+                        <span>•</span>
+                      </>
+                    ) : null}
                     <div className="flex items-center gap-1 text-slate-300">
                       <span className="bg-slate-800 text-yellow-400 font-bold px-2 py-0.5 rounded text-[9px] sm:text-[10px] uppercase">
                         {course.modality}

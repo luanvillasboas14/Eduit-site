@@ -25,6 +25,9 @@ type ApiCourse = {
   duracao?: string | null;
   modalidade?: string | null;
   preco?: number | string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  img_alt?: string | null;
   mercado_trabalho?: string | null;
   indicacao_texto?: string | null;
   aprendizados?: CourseContentItem[] | string | null;
@@ -82,6 +85,7 @@ export function mapCourseRow(row: ApiCourse): Course {
     students: '',
     price: toNumber(row.preco ?? primary?.price),
     image: row.imagem || FALLBACK_IMAGE,
+    imageAlt: row.img_alt || `Curso de ${row.titulo}`,
     description: row.sobre || '',
     modality: row.modalidade || primary?.modality || 'EAD',
     modules: moduleDetails.map((item) => item.title),
@@ -90,6 +94,8 @@ export function mapCourseRow(row: ApiCourse): Course {
     featured: Boolean(row.featured),
     jobMarket: row.mercado_trabalho || undefined,
     audienceText: row.indicacao_texto || undefined,
+    metaTitle: row.meta_title || undefined,
+    metaDescription: row.meta_description || undefined,
     moduleDetails,
     audience,
     careerDetails,

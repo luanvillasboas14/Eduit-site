@@ -3,6 +3,9 @@ import { NewsArticle } from '../types';
 import { fetchRelatedPosts } from '../lib/supabase';
 import { wixBlogCategoryLabel } from '../data/siteUrls';
 import { formatPhoneBR, submitLead } from '../lib/leads';
+import { seoForPost } from '../lib/seo';
+import { Seo } from './Seo';
+import { trackFormSubmit } from '../lib/analytics';
 import {
   ChevronRight,
   ArrowLeft,
@@ -73,6 +76,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
         celular: leadPhone,
         tipo: 'Graduação',
       });
+      trackFormSubmit('blog_lead', { article_id: article.id });
       setIsSubmitted(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');
@@ -83,6 +87,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
   return (
     <div className="bg-slate-100 min-h-screen pt-4 sm:pt-6 pb-12 sm:pb-20 overflow-x-hidden w-full">
+      <Seo {...seoForPost(article)} />
       {/* Breadcrumb / Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
         <div className="flex items-center justify-between gap-3 text-xs">

@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useCourses } from '../lib/courses';
+import { matchesAny, textMatches } from '../lib/text';
+import { trackSearch } from '../lib/analytics';
 import { Course } from '../types';
 import coursesBannerImg from '../assets/images/pos grad.jpg';
 import { 
@@ -20,8 +22,6 @@ import {
 interface PostGradPageProps {
   onSelectCourse: (course: Course) => void;
   onOpenConsultant: (courseTitle?: string) => void;
-  initialSearchQuery?: string;
-  onSearchChange?: (query: string) => void;
   initialCategory?: string;
   titleIncludes?: string;
   onCategoryChange?: (category: string) => void;
@@ -31,33 +31,30 @@ interface PostGradPageProps {
 export const PostGradPage: React.FC<PostGradPageProps> = ({
   onSelectCourse,
   onOpenConsultant,
-  initialSearchQuery = '',
-  onSearchChange,
   initialCategory = 'Todos',
   titleIncludes,
   onCategoryChange,
   onClearFilters,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
-  const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('populares');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
   const { courses, loading, error } = useCourses('pos');
 
   useEffect(() => {
-    setSearchQuery(initialSearchQuery);
-  }, [initialSearchQuery]);
+    const q = searchQuery.trim();
+    if (q.length < 3) return;
+    const timer = window.setTimeout(() => trackSearch(q, 'pos-graduacao'), 600);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     setSelectedCategory(initialCategory);
   }, [initialCategory]);
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    if (onSearchChange) {
-      onSearchChange(val);
-    }
+    setSearchQuery(e.target.value);
   };
 
   const categories = [
@@ -83,14 +80,14 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
       const matchesCategory =
         selectedCategory === 'Todos' || course.category === selectedCategory;
 
-      const matchesTitle =
-        !titleIncludes || course.title.toLowerCase().includes(titleIncludes.toLowerCase());
+      const matchesTitle = !titleIncludes || textMatches(course.title, titleIncludes);
 
-      const matchesSearch =
-        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.modules.some((m) => m.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSearch = matchesAny(searchQuery, [
+        course.title,
+        course.category,
+        course.description,
+        ...course.modules,
+      ]);
 
       return matchesCategory && matchesTitle && matchesSearch;
     });
@@ -123,7 +120,7 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
           <div className="absolute inset-0 z-0 overflow-hidden w-full h-full">
             <img
               src={coursesBannerImg}
-              alt="Pós-Graduação & MBA - Cruzeiro do Sul Virtual"
+              alt=""
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center filter brightness-100 contrast-105"
             />
@@ -157,7 +154,6 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
                   <button
                     onClick={() => {
                       setSearchQuery('');
-                      if (onSearchChange) onSearchChange('');
                     }}
                     className="absolute right-2.5 text-[10px] font-bold text-slate-400 hover:text-white"
                   >
@@ -355,7 +351,7 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
                       >
                         <img
                           src={course.image}
-                          alt={course.title}
+                          alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />
@@ -381,11 +377,15 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
                         </p>
 
                         <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-400 pt-0.5 sm:pt-1 flex-wrap">
-                          <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
-                            <span>{course.duration}</span>
-                          </div>
-                          <span>•</span>
+                          {course.duration ? (
+                            <>
+                              <div className="flex items-center gap-1 sm:gap-1.5">
+                                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
+                                <span>{course.duration}</span>
+                              </div>
+                              <span>•</span>
+                            </>
+                          ) : null}
                           <span className="bg-slate-900 border border-slate-800 text-yellow-400 font-bold px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] uppercase">
                             {course.modality}
                           </span>

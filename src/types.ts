@@ -36,6 +36,9 @@ export interface Course {
   moduleDetails?: CourseContentItem[];
   audience?: CourseContentItem[];
   careerDetails?: CourseContentItem[];
+  metaTitle?: string;
+  metaDescription?: string;
+  imageAlt?: string;
   offers?: CourseOffer[];
 }
 

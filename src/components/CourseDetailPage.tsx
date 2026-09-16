@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Course, Polo } from '../types';
 import { formatBRL, originalFromPrice, previewText, splitParagraphs, useCourses } from '../lib/courses';
+import { pickRelatedCourses } from '../lib/recommendations';
+import { matchesAny } from '../lib/text';
+import { seoForCourse } from '../lib/seo';
+import { Seo } from './Seo';
+import { trackFormSubmit } from '../lib/analytics';
 import { POLOS_DATA } from '../data/polos';
 import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
 import {
@@ -117,6 +122,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         celular: phone,
         tipo: leadTipoFromCourse(course.title, isPostGrad),
       });
+      trackFormSubmit('curso_detalhe', { course_title: course.title });
       setIsSubmitted(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');
@@ -138,26 +144,20 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         selectedCityFilter === 'todos' ||
         polo.city.toLowerCase() === selectedCityFilter.toLowerCase();
       
-      const searchNormalized = poloSearch.toLowerCase().trim();
-      const matchesSearch =
-        searchNormalized === '' ||
-        polo.name.toLowerCase().includes(searchNormalized) ||
-        polo.neighborhood.toLowerCase().includes(searchNormalized) ||
-        polo.city.toLowerCase().includes(searchNormalized) ||
-        polo.address.toLowerCase().includes(searchNormalized);
+      const matchesSearch = matchesAny(poloSearch, [
+        polo.name,
+        polo.neighborhood,
+        polo.city,
+        polo.address,
+      ]);
 
       return matchesCity && matchesSearch;
     });
   }, [poloSearch, selectedCityFilter]);
 
   // Find related courses in the same category or similar
-  const relatedCourses = catalogCourses.filter(
-    (c) => c.id !== course.id && (c.category === course.category || c.categoryBadge === course.categoryBadge)
-  ).slice(0, 3);
-
-  const displayRelated = relatedCourses.length > 0
-    ? relatedCourses
-    : catalogCourses.filter((c) => c.id !== course.id).slice(0, 3);
+  const relatedCourses = pickRelatedCourses(course, catalogCourses, 3);
+  const displayRelated = relatedCourses;
 
   const selectedOffer = course.offers?.[selectedOfferIndex] ?? course.offers?.[0];
   const displayDuration = selectedOffer?.duration || course.duration;
@@ -178,6 +178,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
   return (
     <div className="bg-slate-100 min-h-screen text-slate-900 pb-6 sm:pb-12 lg:pb-20">
+      <Seo {...seoForCourse(course)} />
       {/* First Section */}
       <section className="pt-6 pb-8 border-b border-slate-300">
         {/* Breadcrumb Navigation */}
@@ -326,7 +327,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                 <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl group">
                   <img
                     src={course.image}
-                    alt={course.title}
+                    alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
                     className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
@@ -947,7 +948,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                           {polo.image ? (
                             <img
                               src={polo.image}
-                              alt={polo.name}
+                              alt={`Miniatura do ${polo.name} em ${polo.city}`}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : (
@@ -1085,7 +1086,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   <div className="relative h-32 sm:h-40 overflow-hidden bg-slate-100">
                     <img
                       src={relCourse.image}
-                      alt={relCourse.title}
+                      alt={relCourse.imageAlt || `Foto ilustrativa do curso ${relCourse.title}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />

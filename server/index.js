@@ -1,12 +1,14 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { attachPublicRoutes } from './public.js';
 import { createCursosRouter } from './cursos.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT || 80);
 
+attachPublicRoutes(app);
 app.use('/api/cursos', createCursosRouter());
 
 if (process.env.NODE_ENV === 'production') {

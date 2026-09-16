@@ -1,3 +1,17 @@
+### 2026-09-16 - Graduação a partir do CMS Wix
+
+- **Decisão:** Conteúdo de graduação (duração, formação, textos, meta, imagem) vem do export `graduacao.csv` do Wix. Preços continuam no CSV `preço+gradua.csv`. Slugs/URLs do banco não são alterados. Sync: `python scripts/import_cursos.py --sync-wix-grad`.
+- **Contexto:** O import antigo inventava “5 semestres” para tecnólogo. O CMS tem 4/6/8/10/2 semestres.
+- **Alternativas descartadas:** Reimport com TRUNCATE (quebraria IDs/slugs). Inferir duração pela formação.
+- **Impacto:** 128 cursos de graduação atualizados no Postgres. Recarregar o site basta para a API refletir.
+
+### 2026-09-16 - SEO, 404, sitemap, GA4 e busca
+
+- **Decisão:** Metas por rota no front (`src/lib/seo.ts`), 404 real no catch-all do React Router, `sitemap.xml`/`robots.txt` no Express, GA4 via `VITE_GA_MEASUREMENT_ID` (sem ID no código), busca do Header em `/busca` separada dos filtros locais (acentos ignorados), recomendações determinísticas em `src/lib/recommendations.ts`.
+- **Contexto:** Checklist de pendências sem mudar layout, API de cursos ou banco.
+- **Alternativas descartadas:** Biblioteca de SEO/analytics; sitemap estático no build; redirecionar 404 para a Home.
+- **Impacto:** Produção precisa de `VITE_GA_MEASUREMENT_ID` no build. Sitemap/canonical usam `SITE_URL` (hoje `https://banco-site-eduit.6tqx2r.easypanel.host`). Trocar para `https://eduit.com.br` quando o domínio definitivo estiver no ar.
+
 ### 2026-09-16 - Cursos no Postgres site_anhanguera
 
 - **Decisão:** Catálogo de graduação e pós vive no Postgres `site_anhanguera`. O front Vite não conecta no banco; a API Express em `/api/cursos` lê as tabelas `cursos` e `curso_ofertas`.

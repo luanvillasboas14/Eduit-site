@@ -4,9 +4,11 @@ import express from 'express';
 import path from 'path';
 import {defineConfig, type Plugin} from 'vite';
 import {createCursosRouter} from './server/cursos.js';
+import {attachPublicRoutes} from './server/public.js';
 
 function cursosApiPlugin(): Plugin {
   const api = express();
+  attachPublicRoutes(api);
   api.use('/api/cursos', createCursosRouter());
   return {
     name: 'cursos-api',

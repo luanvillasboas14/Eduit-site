@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { POLOS_DATA } from '../data/polos';
 import { Polo } from '../types';
+import { matchesAny } from '../lib/text';
+import { trackSearch } from '../lib/analytics';
 import {
   MapPin,
   Search,
@@ -31,20 +33,18 @@ export const PolosPage: React.FC<PolosPageProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activePolo, setActivePolo] = useState<Polo | null>(POLOS_DATA[0]);
 
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 3) return;
+    const timer = window.setTimeout(() => trackSearch(q, 'polos'), 600);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
   // Filtered Polos based on search query
   const filteredPolos = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return POLOS_DATA;
-
-    return POLOS_DATA.filter((polo) => {
-      return (
-        polo.name.toLowerCase().includes(query) ||
-        polo.city.toLowerCase().includes(query) ||
-        polo.neighborhood.toLowerCase().includes(query) ||
-        polo.address.toLowerCase().includes(query) ||
-        polo.state.toLowerCase().includes(query)
-      );
-    });
+    return POLOS_DATA.filter((polo) =>
+      matchesAny(searchQuery, [polo.name, polo.city, polo.neighborhood, polo.address, polo.state]),
+    );
   }, [searchQuery]);
 
   const clearFilters = () => {
@@ -190,7 +190,7 @@ export const PolosPage: React.FC<PolosPageProps> = ({
                     {polo.image ? (
                       <img
                         src={polo.image}
-                        alt={polo.name}
+                        alt={`Fachada do ${polo.name} em ${polo.city}`}
                         loading="lazy"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

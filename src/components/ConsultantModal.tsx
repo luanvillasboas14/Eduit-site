@@ -12,6 +12,7 @@ import {
 import { Course } from '../types';
 import { formatBRL, originalFromPrice, useCourses } from '../lib/courses';
 import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
+import { trackFormSubmit } from '../lib/analytics';
 
 interface ConsultantModalProps {
   isOpen: boolean;
@@ -87,6 +88,7 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
         celular: phone,
         tipo: leadTipoFromCourse(selectedCourseTitle, matchedCourse?.categoryBadge === 'PÓS-GRADUAÇÃO'),
       });
+      trackFormSubmit('consultor_modal', { course_title: selectedCourseTitle });
       setSubmitted(true);
     } catch {
       setError('Não foi possível enviar. Tente novamente.');

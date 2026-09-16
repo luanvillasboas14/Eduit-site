@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { NewsArticle } from '../types';
 import { fetchBlogPosts } from '../lib/supabase';
+import { matchesAny } from '../lib/text';
+import { trackSearch } from '../lib/analytics';
 import { BLOG_CATEGORIES, articleMatchesBlogCategory, wixBlogCategoryLabel } from '../data/siteUrls';
 import newsBannerImg from '../assets/images/Cabeçalho (9).jpg';
 import {
@@ -44,6 +46,13 @@ export const NewsPage: React.FC<NewsPageProps> = ({
   }, [initialCategory]);
 
   useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 3) return;
+    const timer = window.setTimeout(() => trackSearch(q, 'blog'), 600);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     let active = true;
     fetchBlogPosts()
       .then((rows) => {
@@ -81,14 +90,13 @@ export const NewsPage: React.FC<NewsPageProps> = ({
     let result = articles.filter((article) => {
       const matchesCategory = articleMatchesBlogCategory(article, selectedCategory);
 
-      const query = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        query === '' ||
-        article.title.toLowerCase().includes(query) ||
-        article.summary.toLowerCase().includes(query) ||
-        article.content.toLowerCase().includes(query) ||
-        article.category.toLowerCase().includes(query) ||
-        (article.tags && article.tags.some((tag) => tag.toLowerCase().includes(query)));
+      const matchesSearch = matchesAny(searchQuery, [
+        article.title,
+        article.summary,
+        article.content,
+        article.category,
+        ...(article.tags || []),
+      ]);
 
       return matchesCategory && matchesSearch;
     });
@@ -125,7 +133,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
           <div className="absolute inset-0 z-0 overflow-hidden w-full h-full">
             <img
               src={newsBannerImg}
-              alt="Notícias & Novidades - Cruzeiro do Sul Virtual"
+              alt=""
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center filter brightness-100 contrast-105"
             />

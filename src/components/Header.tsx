@@ -7,32 +7,20 @@ import { PATHS, navPageFromPath } from '../data/siteUrls';
 interface HeaderProps {
   onOpenConsultant: () => void;
   onSearch?: (query: string) => void;
-  searchQuery?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenConsultant,
   onSearch,
-  searchQuery = '',
 }) => {
   const { pathname } = useLocation();
   const currentPage = navPageFromPath(pathname);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(searchQuery);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSearch) {
-      onSearch(searchTerm);
-    }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchTerm(val);
-    if (onSearch) {
-      onSearch(val);
-    }
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    onSearch?.(searchTerm);
   };
 
   return (
@@ -46,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <img
               src={logoImg}
-              alt="Cruzeiro do Sul Virtual"
+              alt="Logo da Cruzeiro do Sul Virtual"
               className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[240px] object-contain group-hover:scale-105 transition-transform duration-200"
             />
           </Link>
@@ -96,12 +84,13 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Search Bar & CTA */}
           <div className="hidden lg:flex items-center gap-4">
-            <form onSubmit={handleSearchSubmit} className="relative">
+            <form onSubmit={submitSearch} className="relative" role="search">
               <input
                 type="text"
                 placeholder="Buscar curso..."
                 value={searchTerm}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Busca geral no site"
                 className="bg-slate-900/90 border border-slate-700/80 rounded-full pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-yellow-400/80 focus:ring-1 focus:ring-yellow-400/40 w-40 lg:w-48 transition-all"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -126,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-slate-400 hover:text-white focus:outline-none"
-              aria-label="Toggle Menu"
+              aria-label="Abrir menu"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -140,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile Search Bar */}
           <form 
             onSubmit={(e) => {
-              handleSearchSubmit(e);
+              submitSearch(e);
               setIsMobileMenuOpen(false);
             }} 
             className="relative mb-2"
@@ -149,7 +138,8 @@ export const Header: React.FC<HeaderProps> = ({
               type="text"
               placeholder="Buscar curso..."
               value={searchTerm}
-              onChange={handleSearchChange}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Busca geral no site"
               className="w-full bg-slate-900 border border-slate-700 rounded-full pl-9 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-yellow-400"
             />
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
