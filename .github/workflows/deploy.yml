@@ -1,0 +1,25 @@
+name: Deploy EasyPanel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: easypanel-site-eduit
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger EasyPanel deployment
+        env:
+          WEBHOOK_URL: ${{ vars.EASYPANEL_WEBHOOK_SITE_EDUIT || secrets.EASYPANEL_WEBHOOK_SITE_EDUIT }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "::error::Defina EASYPANEL_WEBHOOK_SITE_EDUIT em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          curl --fail --silent --show-error --location --request POST "$WEBHOOK_URL"
+          echo "Deploy disparado no EasyPanel."
