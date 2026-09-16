@@ -9,10 +9,58 @@ concurrency:
   group: easypanel-site-eduit
   cancel-in-progress: true
 
+env:
+  IMAGE: ghcr.io/luanvillasboas14/eduit-site
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      actions: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+            VITE_GA_MEASUREMENT_ID=${{ vars.VITE_GA_MEASUREMENT_ID || secrets.VITE_GA_MEASUREMENT_ID }}
+            VITE_SITE_URL=${{ vars.VITE_SITE_URL || 'https://banco-site-eduit.6tqx2r.easypanel.host' }}
+
+      - name: Make GHCR package public
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            "/users/${{ github.repository_owner }}/packages/container/eduit-site/visibility" \
+            -f visibility=public
+
       - name: Trigger EasyPanel deployment
         env:
           WEBHOOK_URL: ${{ vars.EASYPANEL_WEBHOOK_SITE_EDUIT || secrets.EASYPANEL_WEBHOOK_SITE_EDUIT }}
@@ -22,4 +70,4 @@ jobs:
             exit 1
           fi
           curl --fail --silent --show-error --location --request POST "$WEBHOOK_URL"
-          echo "Deploy disparado no EasyPanel."
+          echo "Imagem publicada e deploy disparado no EasyPanel."
