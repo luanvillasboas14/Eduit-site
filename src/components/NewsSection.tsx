@@ -16,11 +16,13 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
   onNavigateToNews,
 }) => {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchBlogPosts()
       .then((rows) => setArticles(rows.slice(0, 4)))
-      .catch(() => setArticles([]));
+      .catch(() => setArticles([]))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const featuredArticle = articles[0];
@@ -30,7 +32,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
     return (
       <section id="noticias" className="bg-slate-100 pt-6 sm:pt-10 pb-8 sm:pb-12 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-slate-500">
-          Carregando novidades...
+          {isLoading ? 'Carregando novidades...' : 'Nenhuma novidade publicada no momento.'}
         </div>
       </section>
     );

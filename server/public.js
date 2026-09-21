@@ -85,6 +85,12 @@ async function blogUrls() {
 }
 
 export function attachPublicRoutes(app) {
+  app.get('/api/site-config', (_req, res) => {
+    const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '');
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+    res.json({ supabaseUrl, supabaseAnonKey });
+  });
+
   app.get('/robots.txt', (_req, res) => {
     const origin = siteOrigin();
     res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);

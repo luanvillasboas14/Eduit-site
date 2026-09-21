@@ -1,21 +1,61 @@
 import { NewsArticle } from '../types';
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/rest\/v1\/?$/, '') ?? '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+type SiteConfig = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+let cachedConfig: SiteConfig | null = null;
+let inflightConfig: Promise<SiteConfig> | null = null;
+
+function fromViteEnv(): SiteConfig {
+  return {
+    supabaseUrl: (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/rest\/v1\/?$/, '') ?? '',
+    supabaseAnonKey: (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '',
+  };
+}
+
+async function loadSiteConfig(): Promise<SiteConfig> {
+  if (cachedConfig) return cachedConfig;
+  const baked = fromViteEnv();
+  if (baked.supabaseUrl && baked.supabaseAnonKey) {
+    cachedConfig = baked;
+    return cachedConfig;
+  }
+  if (!inflightConfig) {
+    inflightConfig = fetch('/api/site-config')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Falha ao ler a configuração do site');
+        const data = (await response.json()) as Partial<SiteConfig>;
+        const config: SiteConfig = {
+          supabaseUrl: String(data.supabaseUrl || '').replace(/\/rest\/v1\/?$/, ''),
+          supabaseAnonKey: String(data.supabaseAnonKey || ''),
+        };
+        cachedConfig = config;
+        return config;
+      })
+      .finally(() => {
+        inflightConfig = null;
+      });
+  }
+  return inflightConfig;
+}
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseKey);
+  const baked = fromViteEnv();
+  return Boolean(baked.supabaseUrl && baked.supabaseAnonKey);
 }
 
 async function supabaseGet<T>(path: string): Promise<T> {
-  if (!supabaseUrl || !supabaseKey) {
+  const { supabaseUrl, supabaseAnonKey } = await loadSiteConfig();
+  if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
   }
 
   const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
     headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
     },
   });
 

@@ -58,6 +58,9 @@ export const NewsPage: React.FC<NewsPageProps> = ({
       .then((rows) => {
         if (active) setArticles(rows);
       })
+      .catch(() => {
+        if (active) setArticles([]);
+      })
       .finally(() => {
         if (active) setIsLoading(false);
       });
