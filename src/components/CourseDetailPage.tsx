@@ -172,9 +172,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     ? course.careerDetails
     : course.careerOpportunities.map((title) => ({ title }));
   const aboutParagraphs = splitParagraphs(course.description);
-  const heroDescription = isPostGrad
-    ? course.description
-    : previewText(course.description, 220);
+  const heroDescription = previewText(course.description, 220);
 
   return (
     <div className="bg-slate-100 min-h-screen text-slate-900 pb-6 sm:pb-12 lg:pb-20">
@@ -394,7 +392,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     <span>Sobre a Formação em {course.title}</span>
                   </h3>
 
-                  {!isPostGrad && aboutParagraphs.length > 0 ? (
+                  {aboutParagraphs.length > 0 ? (
                     <>
                       <p className="text-sm text-slate-700 leading-relaxed">
                         {aboutParagraphs[0]}
