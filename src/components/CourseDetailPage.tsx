@@ -226,19 +226,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   {course.title}
                 </h1>
 
-                {isPostGrad && aboutParagraphs.length > 0 ? (
-                  <div className="space-y-4 max-w-2xl">
-                    {aboutParagraphs.map((paragraph, index) => (
-                      <p key={index} className="text-sm sm:text-base text-slate-700 leading-relaxed">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-2xl">
-                    {heroDescription}
-                  </p>
-                )}
+                <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-2xl">
+                  {heroDescription}
+                </p>
 
                 {/* Quick Stat Chips */}
                 <div className={`grid gap-3 pt-2 ${isPostGrad ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
