@@ -136,19 +136,57 @@ export async function fetchCourseBySlug(slug: string | undefined): Promise<Cours
 }
 
 export function splitSentences(text: string): string[] {
-  const cleaned = text.replace(/\s+/g, ' ').trim();
+  const cleaned = text
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/:\s+(?=(Qual|Quais|Como|O que|Quando|Onde|Por que)\b)/gi, '. ');
   if (!cleaned) return [];
   const matches = cleaned.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
   return (matches || [cleaned]).map((part) => part.trim()).filter(Boolean);
 }
 
-export function splitParagraphs(text: string): string[] {
-  const sentences = splitSentences(text);
+function groupSentences(sentences: string[], size = 2): string[] {
   const paragraphs: string[] = [];
-  for (let i = 0; i < sentences.length; i += 2) {
-    paragraphs.push(sentences.slice(i, i + 2).join(' '));
+  for (let i = 0; i < sentences.length; i += size) {
+    paragraphs.push(sentences.slice(i, i + size).join(' '));
   }
   return paragraphs;
+}
+
+function splitFaqParagraphs(sentences: string[]): string[] | null {
+  const questionAt = sentences
+    .map((sentence, index) => (/[?？]\s*$/.test(sentence) ? index : -1))
+    .filter((index) => index >= 0);
+  if (questionAt.length < 2) return null;
+
+  const paragraphs: string[] = [];
+  let cursor = 0;
+  for (const qIndex of questionAt) {
+    if (qIndex > cursor) {
+      paragraphs.push(...groupSentences(sentences.slice(cursor, qIndex)));
+    }
+    const nextQ = questionAt.find((index) => index > qIndex);
+    const end = nextQ ?? sentences.length;
+    paragraphs.push(sentences.slice(qIndex, end).join(' '));
+    cursor = end;
+  }
+  if (cursor < sentences.length) {
+    paragraphs.push(...groupSentences(sentences.slice(cursor)));
+  }
+  return paragraphs;
+}
+
+export function splitParagraphs(text: string): string[] {
+  if (!text?.trim()) return [];
+
+  const fromDb = text
+    .split(/\n+/)
+    .map((part) => part.replace(/[ \t]+/g, ' ').trim())
+    .filter(Boolean);
+  if (fromDb.length > 1) return fromDb;
+
+  const sentences = splitSentences(text);
+  return splitFaqParagraphs(sentences) ?? groupSentences(sentences);
 }
 
 /** Resumo curto para cards e hero — 1 frase, no máximo ~2 linhas. */
