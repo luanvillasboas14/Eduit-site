@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useCourses } from '../lib/courses';
-import { matchesAny, textMatches } from '../lib/text';
+import { compareCoursesBySearch, courseSearchScore, textMatches } from '../lib/text';
 import { trackSearch } from '../lib/analytics';
 import { Course } from '../types';
 import coursesBannerImg from '../assets/images/pos grad.webp';
@@ -67,42 +67,38 @@ export const PostGradPage: React.FC<PostGradPageProps> = ({
   ];
 
   // Count courses per category in Pós-graduação
+  const searchedCourses = useMemo(() => {
+    return courses.filter((course) => {
+      const matchesTitle = !titleIncludes || textMatches(course.title, titleIncludes);
+      return matchesTitle && courseSearchScore(searchQuery, course) > 0;
+    });
+  }, [courses, searchQuery, titleIncludes]);
+
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { Todos: courses.length };
-    courses.forEach((course) => {
+    const counts: Record<string, number> = { Todos: searchedCourses.length };
+    searchedCourses.forEach((course) => {
       counts[course.category] = (counts[course.category] || 0) + 1;
     });
     return counts;
-  }, [courses]);
+  }, [searchedCourses]);
 
   const filteredAndSortedCourses = useMemo(() => {
-    let result = courses.filter((course) => {
-      const matchesCategory =
-        selectedCategory === 'Todos' || course.category === selectedCategory;
+    const result = searchedCourses.filter(
+      (course) => selectedCategory === 'Todos' || course.category === selectedCategory,
+    );
 
-      const matchesTitle = !titleIncludes || textMatches(course.title, titleIncludes);
-
-      const matchesSearch = matchesAny(searchQuery, [
-        course.title,
-        course.category,
-        course.description,
-        ...course.modules,
-      ]);
-
-      return matchesCategory && matchesTitle && matchesSearch;
-    });
-
-    // Sorting
-    if (sortBy === 'preco-asc') {
+    if (searchQuery.trim() && sortBy === 'populares') {
+      result.sort(compareCoursesBySearch(searchQuery));
+    } else if (sortBy === 'preco-asc') {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'rating') {
       result.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === 'nome') {
-      result.sort((a, b) => a.title.localeCompare(b.title));
+      result.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
     }
 
     return result;
-  }, [courses, selectedCategory, searchQuery, sortBy, titleIncludes]);
+  }, [searchedCourses, selectedCategory, searchQuery, sortBy]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');

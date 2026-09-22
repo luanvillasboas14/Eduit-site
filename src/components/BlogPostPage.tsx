@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
 import { fetchRelatedPosts } from '../lib/supabase';
 import { wixBlogCategoryLabel } from '../data/siteUrls';
-import { formatPhoneBR, submitLead } from '../lib/leads';
+import { articleBodyHtml } from '../lib/article';
+import { formatPhoneBR, submitLead, validateLeadContact } from '../lib/leads';
 import { seoForPost } from '../lib/seo';
 import { Seo } from './Seo';
 import { trackFormSubmit } from '../lib/analytics';
@@ -66,7 +67,12 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leadName.trim() || !leadPhone.trim() || !leadEmail.trim() || !privacy) return;
+    if (!leadName.trim() || !leadPhone.trim() || !privacy) return;
+    const contactError = validateLeadContact({ email: leadEmail, celular: leadPhone });
+    if (contactError) {
+      setFormError(contactError);
+      return;
+    }
     setFormError('');
     setIsSending(true);
     try {
@@ -185,9 +191,10 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
             {/* Article Content Body (Light Background Container for maximum readability) */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 text-slate-800 shadow-sm space-y-6">
-              <div className="prose prose-slate max-w-none text-sm sm:text-base leading-relaxed space-y-4 whitespace-pre-line">
-                {article.content}
-              </div>
+              <div
+                className="article-body max-w-none"
+                dangerouslySetInnerHTML={{ __html: articleBodyHtml(article.content) }}
+              />
 
               {/* Tags Section */}
               {article.tags && article.tags.length > 0 && (
@@ -332,11 +339,10 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      E-mail
+                      E-mail (opcional)
                     </label>
                     <input
                       type="email"
-                      required
                       placeholder="Ex: maria@email.com"
                       value={leadEmail}
                       onChange={(e) => setLeadEmail(e.target.value)}

@@ -10,7 +10,7 @@ const SELECT_LIST = `
     c.categoria,
     c.categoria_raw,
     c.category_badge,
-    left(c.sobre, 400) AS sobre,
+    c.sobre,
     c.imagem,
     c.url_path,
     c.formacao,

@@ -32,6 +32,7 @@ export interface Course {
   formation?: string;
   featured?: boolean;
   jobMarket?: string;
+  areaText?: string;
   audienceText?: string;
   moduleDetails?: CourseContentItem[];
   audience?: CourseContentItem[];

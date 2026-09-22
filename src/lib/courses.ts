@@ -29,6 +29,7 @@ type ApiCourse = {
   meta_description?: string | null;
   img_alt?: string | null;
   mercado_trabalho?: string | null;
+  area_atuacao_texto?: string | null;
   indicacao_texto?: string | null;
   aprendizados?: CourseContentItem[] | string | null;
   indicacoes?: CourseContentItem[] | string | null;
@@ -93,6 +94,7 @@ export function mapCourseRow(row: ApiCourse): Course {
     formation: row.formacao || primary?.formation || undefined,
     featured: Boolean(row.featured),
     jobMarket: row.mercado_trabalho || undefined,
+    areaText: row.area_atuacao_texto || undefined,
     audienceText: row.indicacao_texto || undefined,
     metaTitle: row.meta_title || undefined,
     metaDescription: row.meta_description || undefined,

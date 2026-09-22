@@ -37,6 +37,11 @@ const STATIC_SEO: Record<string, SeoContent> = {
     description:
       'Pesquise cursos de graduação, pós-graduação, polos de apoio e publicações do blog da Cruzeiro do Sul Virtual.',
   },
+  [PATHS.polos]: {
+    title: `Polos de apoio presencial | ${BRAND}`,
+    description:
+      'Encontre o polo EAD da Cruzeiro do Sul Virtual mais perto de você. Endereço, horários e atendimento em São Paulo e região.',
+  },
   '/educacao': {
     title: `Graduação em Educação | ${BRAND}`,
     description: 'Cursos de graduação na área de Educação EAD da Cruzeiro do Sul Virtual.',

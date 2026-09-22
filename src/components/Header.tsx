@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, X, GraduationCap, ChevronRight, Home, Newspaper, Award } from 'lucide-react';
+import { Search, Menu, X, GraduationCap, ChevronRight, Home, Newspaper, Award, MapPin } from 'lucide-react';
 import logoImg from './Component 5 (2).png';
 import { PATHS, navPageFromPath } from '../data/siteUrls';
 
@@ -73,6 +73,16 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Award className="w-4 h-4" />
               <span>Pós-graduação</span>
+            </Link>
+
+            <Link
+              to={PATHS.polos}
+              className={`hover:text-yellow-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer ${
+                currentPage === 'polos' ? 'text-yellow-400 font-bold border-b-2 border-yellow-400' : ''
+              }`}
+            >
+              <MapPin className="w-4 h-4" />
+              <span>Polos</span>
             </Link>
 
             <Link
@@ -189,6 +199,22 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="flex items-center gap-2">
               <Award className="w-4 h-4 text-yellow-400" />
               <span>Pós-graduação</span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-slate-500" />
+          </Link>
+
+          <Link
+            to={PATHS.polos}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`w-full text-left py-2.5 px-3 text-sm rounded-lg flex items-center justify-between transition-colors ${
+              currentPage === 'polos'
+                ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-400/20'
+                : 'text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-yellow-400" />
+              <span>Polos</span>
             </span>
             <ChevronRight className="w-4 h-4 text-slate-500" />
           </Link>

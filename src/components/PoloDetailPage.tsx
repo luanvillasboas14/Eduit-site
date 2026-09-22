@@ -7,7 +7,7 @@ import { Seo } from './Seo';
 import { trackFormSubmit } from '../lib/analytics';
 import { POLOS_DATA } from '../data/polos';
 import { PoloGoogleReviews } from './PoloGoogleReviews';
-import { formatPhoneBR, submitLead } from '../lib/leads';
+import { formatPhoneBR, submitLead, validateLeadContact } from '../lib/leads';
 import {
   MapPin,
   Phone,
@@ -84,7 +84,12 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim() || !email.trim() || !privacy) return;
+    if (!name.trim() || !phone.trim() || !privacy) return;
+    const contactError = validateLeadContact({ email, celular: phone });
+    if (contactError) {
+      setFormError(contactError);
+      return;
+    }
     setFormError('');
     setIsSending(true);
     try {
@@ -688,11 +693,10 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      E-mail
+                      E-mail (opcional)
                     </label>
                     <input
                       type="email"
-                      required
                       placeholder="Ex: maria@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}

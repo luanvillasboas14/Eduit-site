@@ -22,6 +22,59 @@
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.article-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: #334155;
+  line-height: 1.7;
+}
+
+.article-body h2 {
+  margin-top: 0.35rem;
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.article-body p,
+.article-body li {
+  font-size: 0.95rem;
+}
+
+.article-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+
+.article-table {
+  overflow-x: auto;
+}
+
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.article-body th,
+.article-body td {
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.article-body th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+}
+
 /* Custom sleek scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

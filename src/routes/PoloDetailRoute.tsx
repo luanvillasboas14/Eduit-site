@@ -26,7 +26,7 @@ export function PoloDetailRoute({
   return (
     <PoloDetailPage
       polo={polo}
-      onBackToPolos={() => navigate(PATHS.home)}
+      onBackToPolos={() => navigate(PATHS.polos)}
       onOpenConsultant={(name) => onOpenConsultant(name || polo.name)}
       onSelectCourse={onSelectCourse}
       onNavigateGraduation={() => navigate(PATHS.graduacao)}

@@ -64,6 +64,9 @@ const VideoModal = lazy(() =>
 const PoloDetailRoute = lazy(() =>
   import('./routes/PoloDetailRoute').then((m) => ({ default: m.PoloDetailRoute })),
 );
+const PolosPage = lazy(() =>
+  import('./components/PolosPage').then((m) => ({ default: m.PolosPage })),
+);
 
 function PageFallback() {
   return (
@@ -318,6 +321,20 @@ export default function App() {
             }
           />
 
+          <Route
+            path={PATHS.polos}
+            element={
+              <>
+                <Seo {...seoForPath(PATHS.polos)} path={PATHS.polos} />
+                <PolosPage
+                  onOpenConsultant={(poloName) => handleOpenConsultant(poloName || '')}
+                  onNavigateGraduation={() => navigate(PATHS.graduacao)}
+                  onSelectPolo={handleSelectPolo}
+                />
+              </>
+            }
+          />
+
           {POLO_PATHS.map((path) => (
             <React.Fragment key={path}>
             <Route
@@ -434,7 +451,7 @@ function CourseDetailRoute({
         onOpenConsultant(courseTitle || course.title, poloName)
       }
       onSelectPolo={onSelectPolo}
-      onNavigatePolos={() => navigate(PATHS.home)}
+      onNavigatePolos={() => navigate(PATHS.polos)}
     />
   );
 }

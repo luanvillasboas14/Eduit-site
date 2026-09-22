@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Course } from '../types';
 import { formatBRL, originalFromPrice } from '../lib/courses';
-import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
+import { formatPhoneBR, leadTipoFromCourse, submitLead, validateLeadContact } from '../lib/leads';
 import { trackFormSubmit } from '../lib/analytics';
 import { X, CheckCircle2, Clock, Star, Award, GraduationCap, ArrowRight, MessageCircle } from 'lucide-react';
 
@@ -29,6 +29,11 @@ export const CourseModal: React.FC<CourseModalProps> = ({
   const handleEnroll = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!privacy) return;
+    const contactError = validateLeadContact({ email: studentEmail, celular: studentPhone });
+    if (contactError) {
+      setFormError(contactError);
+      return;
+    }
     setFormError('');
     setIsSending(true);
     try {
@@ -220,8 +225,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({
                   </div>
                   <input
                     type="email"
-                    required
-                    placeholder="Seu E-mail"
+                    placeholder="E-mail (opcional)"
                     value={studentEmail}
                     onChange={(e) => setStudentEmail(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-400"

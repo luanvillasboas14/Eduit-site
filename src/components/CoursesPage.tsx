@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { previewText, useCourses } from '../lib/courses';
-import { matchesAny, textMatches } from '../lib/text';
+import { compareCoursesBySearch, courseSearchScore, textMatches } from '../lib/text';
 import { trackSearch } from '../lib/analytics';
 import { Course } from '../types';
 import coursesBannerImg from '../assets/images/graduação.webp';
@@ -77,47 +77,43 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
   const modalities = ['Todas', 'EAD', 'Semipresencial'];
 
   // Count courses per category
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { Todos: courses.length };
-    courses.forEach((course) => {
-      counts[course.category] = (counts[course.category] || 0) + 1;
-    });
-    return counts;
-  }, [courses]);
-
-  const filteredAndSortedCourses = useMemo(() => {
-    let result = courses.filter((course) => {
-      const matchesCategory =
-        selectedCategory === 'Todos' || course.category === selectedCategory;
-
+  const searchedCourses = useMemo(() => {
+    return courses.filter((course) => {
       const matchesModality =
         selectedModality === 'Todas' ||
         course.modality.includes(selectedModality) ||
         Boolean(course.offers?.some((offer) => offer.modality.includes(selectedModality)));
-
       const matchesTitle = !titleIncludes || textMatches(course.title, titleIncludes);
-
-      const matchesSearch = matchesAny(searchQuery, [
-        course.title,
-        course.category,
-        course.description,
-        ...course.modules,
-      ]);
-
-      return matchesCategory && matchesModality && matchesTitle && matchesSearch;
+      const matchesSearch = courseSearchScore(searchQuery, course) > 0;
+      return matchesModality && matchesTitle && matchesSearch;
     });
+  }, [courses, selectedModality, searchQuery, titleIncludes]);
 
-    // Sorting
-    if (sortBy === 'preco-asc') {
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { Todos: searchedCourses.length };
+    searchedCourses.forEach((course) => {
+      counts[course.category] = (counts[course.category] || 0) + 1;
+    });
+    return counts;
+  }, [searchedCourses]);
+
+  const filteredAndSortedCourses = useMemo(() => {
+    const result = searchedCourses.filter(
+      (course) => selectedCategory === 'Todos' || course.category === selectedCategory,
+    );
+
+    if (searchQuery.trim() && sortBy === 'populares') {
+      result.sort(compareCoursesBySearch(searchQuery));
+    } else if (sortBy === 'preco-asc') {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'rating') {
       result.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === 'nome') {
-      result.sort((a, b) => a.title.localeCompare(b.title));
+      result.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
     }
 
     return result;
-  }, [courses, selectedCategory, selectedModality, searchQuery, sortBy, titleIncludes]);
+  }, [searchedCourses, selectedCategory, searchQuery, sortBy]);
 
   const clearFilters = () => {
     setSelectedCategory('Todos');

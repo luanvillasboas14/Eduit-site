@@ -6,7 +6,7 @@ import { PATHS, isPostgradCourse } from '../data/siteUrls';
 import { POLOS_DATA } from '../data/polos';
 import { previewText, useCourses } from '../lib/courses';
 import { fetchBlogPosts } from '../lib/supabase';
-import { matchesAny } from '../lib/text';
+import { compareCoursesBySearch, courseSearchScore, matchesAny } from '../lib/text';
 import { trackSearch } from '../lib/analytics';
 import { seoForPath } from '../lib/seo';
 import { Seo } from './Seo';
@@ -62,16 +62,16 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
   const matchingGrad = useMemo(
     () =>
-      graduation.filter((course) =>
-        matchesAny(query, [course.title, course.category, course.description, course.modality, ...course.modules]),
-      ),
+      graduation
+        .filter((course) => courseSearchScore(query, course) > 0)
+        .sort(query.trim() ? compareCoursesBySearch(query) : () => 0),
     [graduation, query],
   );
   const matchingPos = useMemo(
     () =>
-      postgrad.filter((course) =>
-        matchesAny(query, [course.title, course.category, course.description, course.modality, ...course.modules]),
-      ),
+      postgrad
+        .filter((course) => courseSearchScore(query, course) > 0)
+        .sort(query.trim() ? compareCoursesBySearch(query) : () => 0),
     [postgrad, query],
   );
   const matchingPolos = useMemo(

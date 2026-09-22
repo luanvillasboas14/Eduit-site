@@ -6,6 +6,7 @@ const STATIC_PATHS = [
   '/pos-graduacao',
   '/blog',
   '/busca',
+  '/polos',
   '/educacao',
   '/comunicacao',
   '/gestao-negocios',
@@ -68,6 +69,7 @@ Este site publica o catálogo de cursos, polos de apoio presencial, blog e formu
 - [Graduação EAD](${origin}/graduacao): lista de cursos de graduação
 - [Pós-graduação e MBA](${origin}/pos-graduacao): especializações e MBAs
 - [Blog](${origin}/blog): notícias, dicas e dúvidas acadêmicas
+- [Polos](${origin}/polos): polos de apoio presencial
 - [Busca](${origin}/busca): pesquisa de cursos, polos e posts
 
 ## Dados para agentes

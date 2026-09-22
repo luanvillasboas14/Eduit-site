@@ -7,6 +7,7 @@ export const PATHS = {
   posGraduacao: '/pos-graduacao',
   blog: '/blog',
   busca: '/busca',
+  polos: '/polos',
 } as const;
 
 export type BlogCategory = {
@@ -160,7 +161,7 @@ export function isListingPath(pathname: string): boolean {
   );
 }
 
-export type NavPage = 'home' | 'courses' | 'pos-graduacao' | 'news';
+export type NavPage = 'home' | 'courses' | 'pos-graduacao' | 'news' | 'polos';
 
 export function navPageFromPath(pathname: string): NavPage {
   if (
@@ -179,6 +180,9 @@ export function navPageFromPath(pathname: string): NavPage {
   }
   if (pathname === PATHS.blog || pathname.startsWith('/post/') || pathname.startsWith('/blog/categories/')) {
     return 'news';
+  }
+  if (pathname === PATHS.polos || POLO_PATHS.includes(pathname)) {
+    return 'polos';
   }
   return 'home';
 }

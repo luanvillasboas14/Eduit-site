@@ -7,7 +7,7 @@ import { seoForCourse } from '../lib/seo';
 import { Seo } from './Seo';
 import { trackFormSubmit } from '../lib/analytics';
 import { POLOS_DATA } from '../data/polos';
-import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
+import { formatPhoneBR, leadTipoFromCourse, submitLead, validateLeadContact } from '../lib/leads';
 import {
   Star,
   Clock,
@@ -72,7 +72,6 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   const [formError, setFormError] = useState('');
   const [entryMethod, setEntryMethod] = useState('vestibular-online');
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [expandedSemesters, setExpandedSemesters] = useState<Record<number, boolean>>({});
 
   // Polo search filter state
@@ -102,7 +101,6 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     setIsSubmitted(false);
-    setIsAboutExpanded(false);
     setExpandedSemesters({});
     setActiveTab('overview');
     setPoloSearch('');
@@ -113,6 +111,11 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!privacy) return;
+    const contactError = validateLeadContact({ email, celular: phone });
+    if (contactError) {
+      setFormError(contactError);
+      return;
+    }
     setFormError('');
     setIsSending(true);
     try {
@@ -168,10 +171,18 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     ? course.moduleDetails
     : course.modules.map((title) => ({ title }));
   const audienceItems = course.audience?.length ? course.audience : [];
-  const careerItems = course.careerDetails?.length
+  const careerItems = (course.careerDetails?.length
     ? course.careerDetails
-    : course.careerOpportunities.map((title) => ({ title }));
+    : course.careerOpportunities.map((title) => ({ title }))
+  ).filter((item) => item.title && !item.title.trim().endsWith(':'));
   const aboutParagraphs = splitParagraphs(course.description);
+  const marketParagraphs = splitParagraphs(course.jobMarket || '');
+  const areaLines = (course.areaText || '')
+    .split(/\n+/)
+    .map((line) => line.replace(/^[\s•\-]+/, '').trim())
+    .filter(Boolean);
+  const areaIntro = areaLines.find((line) => line.endsWith(':'));
+  const areaItems = areaLines.filter((line) => line !== areaIntro);
   const heroDescription = previewText(course.description, 220);
 
   return (
@@ -237,9 +248,28 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                       <Clock className="w-3.5 h-3.5 text-yellow-500" />
                       <span>Duração</span>
                     </div>
-                    <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                      {displayDuration}
-                    </span>
+                    {isPostGrad && course.offers && course.offers.length > 1 ? (
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
+                        {course.offers.map((offer, index) => (
+                          <button
+                            key={`${offer.duration}-${offer.formation}-${index}`}
+                            type="button"
+                            onClick={() => setSelectedOfferIndex(index)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer ${
+                              selectedOfferIndex === index
+                                ? 'bg-yellow-400 text-slate-950 border-yellow-400'
+                                : 'bg-slate-50 text-slate-700 border-slate-300 hover:border-yellow-400'
+                            }`}
+                          >
+                            {offer.duration || offer.formation}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+                        {displayDuration}
+                      </span>
+                    )}
                   </div>
 
                   {isPostGrad ? (
@@ -289,7 +319,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   )}
                 </div>
 
-                {course.offers && course.offers.length > 1 && (
+                {!isPostGrad && course.offers && course.offers.length > 1 && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     {course.offers.map((offer, index) => (
                       <button
@@ -397,60 +427,37 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   </h3>
 
                   {aboutParagraphs.length > 0 ? (
-                    <>
-                      <p className="text-sm text-slate-700 leading-relaxed">
-                        {aboutParagraphs[0]}
+                    aboutParagraphs.map((paragraph, index) => (
+                      <p key={index} className="text-sm text-slate-700 leading-relaxed">
+                        {paragraph}
                       </p>
-                      {isAboutExpanded && aboutParagraphs.length > 1 && (
-                        <div className="space-y-4 animate-fadeIn">
-                          {aboutParagraphs.slice(1).map((paragraph, index) => (
-                            <p key={index} className="text-sm text-slate-700 leading-relaxed">
-                              {paragraph}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      {aboutParagraphs.length > 1 && (
-                        <button
-                          onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-600 hover:text-yellow-700 transition-colors pt-1 cursor-pointer"
-                        >
-                          <span>{isAboutExpanded ? 'Ler menos' : 'Ler mais'}</span>
-                          {isAboutExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </button>
-                      )}
-                    </>
+                    ))
                   ) : (
                     <>
                       <p className="text-sm text-slate-700 leading-relaxed">
                         O curso de <strong className="text-slate-950">{course.title}</strong> da Cruzeiro do Sul Virtual oferece uma preparação de alto nível projetada para atender às demandas reais e dinâmicas do mercado profissional. Com metodologia interativa e flexibilidade de horários, você estuda no seu próprio ritmo com apoio integral de professores e tutores especializados.
                       </p>
-                      {isAboutExpanded && (
-                        <div className="space-y-4 animate-fadeIn">
-                          <p className="text-sm text-slate-700 leading-relaxed">
-                            Durante a sua jornada acadêmica, você desenvolverá competências técnicas essenciais, raciocínio crítico, visão estratégica e habilidade prática, utilizando uma plataforma virtual moderna e recursos educacionais digitais de última geração.
-                          </p>
-                          <p className="text-sm text-slate-700 leading-relaxed">
-                            Além disso, a matriz curricular integra módulos práticos e atualizados, direcionados para os principais desafios da carreira, garantindo que você se forme pronto para atuar em grandes empresas, organizações públicas ou no próprio empreendimento.
-                          </p>
-                        </div>
-                      )}
-                      <button
-                        onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-600 hover:text-yellow-700 transition-colors pt-1 cursor-pointer"
-                      >
-                        <span>{isAboutExpanded ? 'Ler menos' : 'Ler mais'}</span>
-                        {isAboutExpanded ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </button>
+                      <p className="text-sm text-slate-700 leading-relaxed">
+                        Durante a sua jornada acadêmica, você desenvolverá competências técnicas essenciais, raciocínio crítico, visão estratégica e habilidade prática, utilizando uma plataforma virtual moderna e recursos educacionais digitais de última geração.
+                      </p>
                     </>
+                  )}
+
+                  {marketParagraphs.map((paragraph, index) => (
+                    <p key={`market-${index}`} className="text-sm text-slate-700 leading-relaxed">
+                      {paragraph}
+                    </p>
+                  ))}
+
+                  {areaIntro && (
+                    <p className="text-sm text-slate-700 leading-relaxed">{areaIntro}</p>
+                  )}
+                  {areaItems.length > 0 && (
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700">
+                      {areaItems.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
                   )}
                 </div>
 
@@ -839,11 +846,10 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      E-mail
+                      E-mail (opcional)
                     </label>
                     <input
                       type="email"
-                      required
                       placeholder="Ex: maria@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}

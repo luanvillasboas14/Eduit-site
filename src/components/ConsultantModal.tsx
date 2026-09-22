@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Course } from '../types';
 import { formatBRL, originalFromPrice, useCourses } from '../lib/courses';
-import { formatPhoneBR, leadTipoFromCourse, submitLead } from '../lib/leads';
+import { formatPhoneBR, leadTipoFromCourse, submitLead, validateLeadContact } from '../lib/leads';
 import { trackFormSubmit } from '../lib/analytics';
 
 interface ConsultantModalProps {
@@ -79,6 +79,11 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!privacy) return;
+    const contactError = validateLeadContact({ email, celular: phone });
+    if (contactError) {
+      setError(contactError);
+      return;
+    }
     setError('');
     setIsSending(true);
     try {
@@ -263,10 +268,9 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">E-mail</label>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">E-mail (opcional)</label>
                 <input
                   type="email"
-                  required
                   placeholder="Ex: maria@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

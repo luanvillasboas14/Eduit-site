@@ -8,6 +8,7 @@ import {
   Award,
   Newspaper,
   Home,
+  MapPin,
 } from 'lucide-react';
 import logoImg from './Component 5 (2).png';
 import { PATHS } from '../data/siteUrls';
@@ -90,6 +91,15 @@ export const Footer: React.FC<FooterProps> = ({ onOpenConsultant }) => {
                 >
                   <Award className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
                   <span>Pós-graduação</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={PATHS.polos}
+                  className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors cursor-pointer group"
+                >
+                  <MapPin className="w-3 h-3 text-yellow-400/80 group-hover:text-yellow-400 shrink-0" />
+                  <span>Polos</span>
                 </Link>
               </li>
               <li>
