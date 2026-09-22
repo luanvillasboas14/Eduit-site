@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { attachPublicRoutes } from './public.js';
 import { createCursosRouter } from './cursos.js';
+import { createMidiaRouter } from './midia.js';
 import { attachGzipJson, attachSpaStatic } from './static.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -12,6 +13,7 @@ const port = Number(process.env.PORT || 80);
 attachGzipJson(app);
 attachPublicRoutes(app);
 app.use('/api/cursos', createCursosRouter());
+app.use('/api/midia', createMidiaRouter());
 
 if (process.env.NODE_ENV === 'production') {
   attachSpaStatic(app, path.resolve(__dirname, '../dist'));

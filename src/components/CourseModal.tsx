@@ -68,6 +68,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({
           <img
             src={course.image}
             alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/50 to-transparent" />

@@ -1,5 +1,11 @@
 import { Router } from 'express';
 import { pool } from './db.js';
+import { localImage } from './midia.js';
+
+function withLocalImage(row) {
+  if (!row || typeof row !== 'object') return row;
+  return { ...row, imagem: localImage(row.imagem) };
+}
 
 const SELECT_LIST = `
   SELECT
@@ -80,7 +86,7 @@ export function createCursosRouter() {
       const result = tipo
         ? await pool.query(`${SELECT_LIST} WHERE c.tipo = $1 ORDER BY c.titulo`, [tipo])
         : await pool.query(`${SELECT_LIST} ORDER BY c.tipo, c.titulo`);
-      res.json(result.rows);
+      res.json(result.rows.map(withLocalImage));
     } catch (error) {
       console.error('GET /api/cursos', error);
       res.status(500).json({ error: 'Falha ao ler cursos' });
@@ -96,7 +102,7 @@ export function createCursosRouter() {
         res.status(404).json({ error: 'Curso não encontrado' });
         return;
       }
-      res.json(result.rows[0]);
+      res.json(withLocalImage(result.rows[0]));
     } catch (error) {
       console.error('GET /api/cursos/:slug', error);
       res.status(500).json({ error: 'Falha ao ler curso' });

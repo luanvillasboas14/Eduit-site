@@ -360,6 +360,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     height={384}
                     decoding="async"
                     fetchPriority="high"
+                    referrerPolicy="no-referrer"
                     className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
