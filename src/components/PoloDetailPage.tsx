@@ -659,7 +659,7 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleFormSubmit} className="relative z-10 space-y-3 pt-1">
+                <form noValidate onSubmit={handleFormSubmit} className="relative z-10 space-y-3 pt-1">
                   <div>
                     <label className="text-[11px] font-bold text-slate-300 block mb-1">
                       Nome Completo
@@ -696,7 +696,9 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
                       E-mail (opcional)
                     </label>
                     <input
-                      type="email"
+                      type="text"
+                      inputMode="email"
+                      autoComplete="email"
                       placeholder="Ex: maria@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}

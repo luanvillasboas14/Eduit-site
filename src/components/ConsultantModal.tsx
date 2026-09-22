@@ -210,7 +210,7 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form noValidate onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                   Curso de Interesse
@@ -270,7 +270,9 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
               <div>
                 <label className="text-[11px] font-semibold text-slate-300 block mb-1">E-mail (opcional)</label>
                 <input
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   placeholder="Ex: maria@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

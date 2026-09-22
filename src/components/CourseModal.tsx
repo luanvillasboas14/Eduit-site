@@ -202,7 +202,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({
                   </button>
                 </div>
 
-                <form onSubmit={handleEnroll} className="space-y-3">
+                <form noValidate onSubmit={handleEnroll} className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="text"
@@ -225,7 +225,9 @@ export const CourseModal: React.FC<CourseModalProps> = ({
                     />
                   </div>
                   <input
-                    type="email"
+                    type="text"
+                    inputMode="email"
+                    autoComplete="email"
                     placeholder="E-mail (opcional)"
                     value={studentEmail}
                     onChange={(e) => setStudentEmail(e.target.value)}
