@@ -4,6 +4,7 @@ import { localImage } from './midia.js';
 
 function withLocalImage(row) {
   if (!row || typeof row !== 'object') return row;
+  if (row.slug) return { ...row, imagem: `/cursos/${row.slug}.webp` };
   return { ...row, imagem: localImage(row.imagem) };
 }
 
