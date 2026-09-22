@@ -627,9 +627,17 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                       <Briefcase className="w-5 h-5 text-yellow-500" />
                       <span>Áreas de Atuação Profissional</span>
                     </h3>
-                    <p className="text-xs text-slate-600">
-                      Confira os principais cargos e posições de destaque que você poderá ocupar após concluir sua formação:
-                    </p>
+                    {course.jobMarket ? (
+                      splitParagraphs(course.jobMarket).map((paragraph, index) => (
+                        <p key={index} className="text-xs text-slate-600 leading-relaxed">
+                          {paragraph}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-600">
+                        Confira os principais cargos e posições de destaque que você poderá ocupar após concluir sua formação:
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

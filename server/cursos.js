@@ -29,6 +29,7 @@ function applyCopy(row) {
   if ('aprendizados' in row && copy.aprendizados?.length) next.aprendizados = copy.aprendizados;
   if ('indicacoes' in row && copy.indicacoes?.length) next.indicacoes = copy.indicacoes;
   if ('areas_atuacao' in row && copy.areas_atuacao?.length) next.areas_atuacao = copy.areas_atuacao;
+  if ('mercado_trabalho' in row && copy.mercado) next.mercado_trabalho = copy.mercado;
   return next;
 }
 
