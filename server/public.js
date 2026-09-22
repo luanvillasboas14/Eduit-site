@@ -46,6 +46,92 @@ function siteOrigin() {
   return (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://banco-site-eduit.6tqx2r.easypanel.host').replace(/\/$/, '');
 }
 
+function siteHost() {
+  try {
+    return new URL(siteOrigin()).hostname;
+  } catch {
+    return 'banco-site-eduit.6tqx2r.easypanel.host';
+  }
+}
+
+function llmsTxt() {
+  const origin = siteOrigin();
+  return `# Cruzeiro do Sul Virtual
+
+> Cursos de graduação e pós-graduação EAD da Cruzeiro do Sul Virtual. Consulte bolsas, polos de apoio e formas de ingresso.
+
+Este site publica o catálogo de cursos, polos de apoio presencial, blog e formulário para falar com um consultor.
+
+## Páginas principais
+
+- [Início](${origin}/): apresentação da Cruzeiro do Sul Virtual
+- [Graduação EAD](${origin}/graduacao): lista de cursos de graduação
+- [Pós-graduação e MBA](${origin}/pos-graduacao): especializações e MBAs
+- [Blog](${origin}/blog): notícias, dicas e dúvidas acadêmicas
+- [Busca](${origin}/busca): pesquisa de cursos, polos e posts
+
+## Dados para agentes
+
+- [Sitemap](${origin}/sitemap.xml): índice de URLs públicas
+- [API de cursos](${origin}/api/cursos): catálogo em JSON
+- [Catálogo ARD](${origin}/.well-known/ai-catalog.json): manifesto ai-catalog.json
+`;
+}
+
+function aiCatalog() {
+  const origin = siteOrigin();
+  const host = siteHost();
+  return {
+    specVersion: '1.0',
+    host: {
+      displayName: 'Cruzeiro do Sul Virtual',
+      documentationUrl: `${origin}/`,
+    },
+    entries: [
+      {
+        identifier: `urn:air:${host}:site:web`,
+        displayName: 'Cruzeiro do Sul Virtual',
+        type: 'text/html',
+        url: `${origin}/`,
+        description: 'Site de graduação e pós-graduação EAD, polos de apoio e atendimento a leads.',
+        tags: ['educacao', 'ead', 'graduacao', 'pos-graduacao'],
+        capabilities: ['CourseCatalog', 'CampusLocator', 'LeadForm'],
+        representativeQueries: [
+          'quais cursos de graduação EAD estão disponíveis',
+          'como falar com um consultor sobre bolsas',
+          'onde fica o polo de apoio mais próximo',
+        ],
+      },
+      {
+        identifier: `urn:air:${host}:site:llms`,
+        displayName: 'llms.txt',
+        type: 'text/markdown',
+        url: `${origin}/llms.txt`,
+        description: 'Resumo em Markdown da estrutura do site para agentes de IA.',
+      },
+      {
+        identifier: `urn:air:${host}:site:cursos`,
+        displayName: 'API de cursos',
+        type: 'application/json',
+        url: `${origin}/api/cursos`,
+        description: 'Catálogo JSON de graduação e pós-graduação.',
+        capabilities: ['CourseCatalog'],
+        representativeQueries: [
+          'listar cursos de graduação',
+          'buscar especializações de pós-graduação',
+        ],
+      },
+      {
+        identifier: `urn:air:${host}:site:sitemap`,
+        displayName: 'Sitemap',
+        type: 'application/xml',
+        url: `${origin}/sitemap.xml`,
+        description: 'Índice de URLs públicas do site.',
+      },
+    ],
+  };
+}
+
 function xmlEscape(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -93,8 +179,23 @@ export function attachPublicRoutes(app) {
 
   app.get('/robots.txt', (_req, res) => {
     const origin = siteOrigin();
-    res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);
+    res
+      .type('text/plain')
+      .send(`User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);
   });
+
+  app.get('/llms.txt', (_req, res) => {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(llmsTxt());
+  });
+
+  const sendCatalog = (_req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.json(aiCatalog());
+  };
+  app.get('/ai-catalog.json', sendCatalog);
+  app.get('/.well-known/ai-catalog.json', sendCatalog);
 
   app.get('/sitemap.xml', async (_req, res) => {
     const origin = siteOrigin();
