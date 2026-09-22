@@ -78,6 +78,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   const [poloSearch, setPoloSearch] = useState('');
   const [selectedCityFilter, setSelectedCityFilter] = useState<string>('todos');
   const [selectedOfferIndex, setSelectedOfferIndex] = useState(0);
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const { courses: catalogCourses } = useCourses(
     course.categoryBadge === 'PÓS-GRADUAÇÃO' ? 'pos' : 'graduacao',
   );
@@ -106,6 +107,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     setPoloSearch('');
     setSelectedCityFilter('todos');
     setSelectedOfferIndex(0);
+    setIsAboutExpanded(false);
   }, [course.id]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -176,13 +178,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     : course.careerOpportunities.map((title) => ({ title }))
   ).filter((item) => item.title && !item.title.trim().endsWith(':'));
   const aboutParagraphs = splitParagraphs(course.description);
-  const marketParagraphs = splitParagraphs(course.jobMarket || '');
-  const areaLines = (course.areaText || '')
-    .split(/\n+/)
-    .map((line) => line.replace(/^[\s•\-]+/, '').trim())
-    .filter(Boolean);
-  const areaIntro = areaLines.find((line) => line.endsWith(':'));
-  const areaItems = areaLines.filter((line) => line !== areaIntro);
+  const visibleAbout = isAboutExpanded ? aboutParagraphs : aboutParagraphs.slice(0, 1);
   const heroDescription = previewText(course.description, 220);
 
   return (
@@ -428,7 +424,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   </h3>
 
                   {aboutParagraphs.length > 0 ? (
-                    aboutParagraphs.map((paragraph, index) => (
+                    visibleAbout.map((paragraph, index) => (
                       <p key={index} className="text-sm text-slate-700 leading-relaxed">
                         {paragraph}
                       </p>
@@ -444,21 +440,19 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     </>
                   )}
 
-                  {marketParagraphs.map((paragraph, index) => (
-                    <p key={`market-${index}`} className="text-sm text-slate-700 leading-relaxed">
-                      {paragraph}
-                    </p>
-                  ))}
-
-                  {areaIntro && (
-                    <p className="text-sm text-slate-700 leading-relaxed">{areaIntro}</p>
-                  )}
-                  {areaItems.length > 0 && (
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700">
-                      {areaItems.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
+                  {aboutParagraphs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAboutExpanded((open) => !open)}
+                      className="inline-flex items-center gap-1.5 text-sm font-bold text-yellow-700 hover:text-yellow-600 cursor-pointer"
+                    >
+                      {isAboutExpanded ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                      <span>{isAboutExpanded ? 'Ler menos' : 'Ler mais'}</span>
+                    </button>
                   )}
                 </div>
 

@@ -1,11 +1,42 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Router } from 'express';
 import { pool } from './db.js';
 import { localImage } from './midia.js';
 
-function withLocalImage(row) {
+const courseCopy = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'course-copy.json'), 'utf8'),
+);
+
+function foldTitle(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+const copyByTitle = new Map(courseCopy.map((item) => [item.key, item]));
+
+function applyCopy(row) {
   if (!row || typeof row !== 'object') return row;
-  if (row.slug) return { ...row, imagem: `/cursos/${row.slug}.webp` };
-  return { ...row, imagem: localImage(row.imagem) };
+  const copy = copyByTitle.get(foldTitle(row.titulo));
+  if (!copy) return row;
+  const next = { ...row };
+  if ('sobre' in row && copy.sobre) next.sobre = copy.sobre;
+  if ('aprendizados' in row && copy.aprendizados?.length) next.aprendizados = copy.aprendizados;
+  if ('indicacoes' in row && copy.indicacoes?.length) next.indicacoes = copy.indicacoes;
+  if ('areas_atuacao' in row && copy.areas_atuacao?.length) next.areas_atuacao = copy.areas_atuacao;
+  return next;
+}
+
+function withLocalImage(row) {
+  const source = applyCopy(row);
+  if (!source || typeof source !== 'object') return source;
+  if (source.slug) return { ...source, imagem: `/cursos/${source.slug}.webp` };
+  return { ...source, imagem: localImage(source.imagem) };
 }
 
 const SELECT_LIST = `
