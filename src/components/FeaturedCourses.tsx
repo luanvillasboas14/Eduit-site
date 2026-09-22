@@ -50,7 +50,7 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
           </div>
         ) : (
         <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0 pt-1 -mx-4 px-[8.333%] sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-none">
-          {displayCourses.map((course) => (
+          {displayCourses.map((course, index) => (
             <div
               key={course.id}
               className="w-[76vw] min-w-[76vw] max-w-[280px] xs:w-[270px] xs:min-w-[270px] sm:w-auto sm:min-w-0 sm:max-w-none snap-center sm:snap-start bg-[#0b1329] border-2 sm:border-[3px] border-slate-800 hover:border-yellow-400 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col group hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/15 shrink-0 sm:shrink"
@@ -63,6 +63,10 @@ export const FeaturedCourses: React.FC<FeaturedCoursesProps> = ({
                 <img
                   src={course.image}
                   alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
+                  width={400}
+                  height={176}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />

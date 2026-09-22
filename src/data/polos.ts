@@ -1,17 +1,18 @@
 import { Polo } from '../types';
-import capivariImg from '../assets/images/capivari.png';
-import campinasImg from '../assets/images/campinas.png';
-import itapiraImg from '../assets/images/itapira.png';
-import freguesiaImg from '../assets/images/frequecia do o.png';
-import ibirapueraImg from '../assets/images/Polo_Ibirapuera.png';
-import vilaPrudenteImg from '../assets/images/Polo_Vila prudente.png';
-import vilaMarianaImg from '../assets/images/vila mariana.png';
-import santanaImg from '../assets/images/santana.png';
-import sapopembaImg from '../assets/images/sapopemba.png';
-import barraFundaImg from '../assets/images/barra funda.png';
-import morumbiImg from '../assets/images/morumbi.png';
-import taboaoCentroImg from '../assets/images/taboao centro.png';
-import mituziImg from '../assets/images/mituzi.png';
+import { POLO_SLUGS } from './siteUrls';
+import capivariImg from '../assets/images/capivari.webp';
+import campinasImg from '../assets/images/campinas.webp';
+import itapiraImg from '../assets/images/itapira.webp';
+import freguesiaImg from '../assets/images/frequecia do o.webp';
+import ibirapueraImg from '../assets/images/Polo_Ibirapuera.webp';
+import vilaPrudenteImg from '../assets/images/Polo_Vila prudente.webp';
+import vilaMarianaImg from '../assets/images/vila mariana.webp';
+import santanaImg from '../assets/images/santana.webp';
+import sapopembaImg from '../assets/images/sapopemba.webp';
+import barraFundaImg from '../assets/images/barra funda.webp';
+import morumbiImg from '../assets/images/morumbi.webp';
+import taboaoCentroImg from '../assets/images/taboao centro.webp';
+import mituziImg from '../assets/images/mituzi.webp';
 
 export const POLOS_DATA: Polo[] = [
   {
@@ -236,3 +237,10 @@ export const POLOS_DATA: Polo[] = [
     hubEad: true,
   }
 ];
+
+export function findPoloBySlug(slug: string | undefined): Polo | undefined {
+  if (!slug) return undefined;
+  const id = Object.keys(POLO_SLUGS).find((key) => POLO_SLUGS[key] === slug);
+  if (id) return POLOS_DATA.find((polo) => polo.id === id);
+  return POLOS_DATA.find((polo) => polo.id === slug);
+}

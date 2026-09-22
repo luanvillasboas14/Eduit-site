@@ -103,36 +103,48 @@ export function mapCourseRow(row: ApiCourse): Course {
   };
 }
 
-let cache: Course[] | null = null;
-let inflight: Promise<Course[]> | null = null;
+const listCache = new Map<string, Course[]>();
+const listInflight = new Map<string, Promise<Course[]>>();
+const detailCache = new Map<string, Course>();
 
 export async function fetchCourses(tipo?: CourseTipo): Promise<Course[]> {
-  if (!cache) {
-    if (!inflight) {
-      inflight = fetch('/api/cursos')
-        .then(async (response) => {
-          if (!response.ok) throw new Error('Falha ao carregar cursos');
-          const rows = (await response.json()) as ApiCourse[];
-          cache = rows.map(mapCourseRow);
-          return cache;
-        })
-        .finally(() => {
-          inflight = null;
-        });
-    }
-    cache = await inflight;
-  }
-  if (!tipo) return cache ?? [];
-  return (cache ?? []).filter((course) =>
-    tipo === 'pos' ? course.categoryBadge === 'PÓS-GRADUAÇÃO' : course.categoryBadge !== 'PÓS-GRADUAÇÃO',
-  );
+  const key = tipo || 'all';
+  const cached = listCache.get(key);
+  if (cached) return cached;
+
+  const pending = listInflight.get(key);
+  if (pending) return pending;
+
+  const query = tipo ? `?tipo=${encodeURIComponent(tipo)}` : '';
+  const request = fetch(`/api/cursos${query}`)
+    .then(async (response) => {
+      if (!response.ok) throw new Error('Falha ao carregar cursos');
+      const rows = (await response.json()) as ApiCourse[];
+      const mapped = rows.map(mapCourseRow);
+      listCache.set(key, mapped);
+      return mapped;
+    })
+    .finally(() => {
+      listInflight.delete(key);
+    });
+
+  listInflight.set(key, request);
+  return request;
 }
 
 export async function fetchCourseBySlug(slug: string | undefined): Promise<Course | undefined> {
   if (!slug) return undefined;
   const decoded = decodeURIComponent(slug);
-  const courses = await fetchCourses();
-  return courses.find((course) => course.id === decoded);
+  const cached = detailCache.get(decoded);
+  if (cached) return cached;
+
+  const response = await fetch(`/api/cursos/${encodeURIComponent(decoded)}`);
+  if (response.status === 404) return undefined;
+  if (!response.ok) throw new Error('Falha ao carregar o curso');
+  const row = (await response.json()) as ApiCourse;
+  const course = mapCourseRow(row);
+  detailCache.set(decoded, course);
+  return course;
 }
 
 export function splitSentences(text: string): string[] {

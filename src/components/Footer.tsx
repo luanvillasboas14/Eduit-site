@@ -29,6 +29,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenConsultant }) => {
               <img
                 src={logoImg}
                 alt="Logo da Cruzeiro do Sul Virtual"
+                width={170}
+                height={32}
+                loading="lazy"
+                decoding="async"
                 className="h-7 sm:h-8 w-auto max-w-[170px] object-contain cursor-pointer"
               />
             </Link>

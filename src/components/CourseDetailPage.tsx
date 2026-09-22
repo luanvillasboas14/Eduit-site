@@ -326,6 +326,10 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                   <img
                     src={course.image}
                     alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
+                    width={800}
+                    height={384}
+                    decoding="async"
+                    fetchPriority="high"
                     className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
@@ -947,6 +951,10 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                             <img
                               src={polo.image}
                               alt={`Miniatura do ${polo.name} em ${polo.city}`}
+                              width={80}
+                              height={80}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : (
@@ -1085,6 +1093,10 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     <img
                       src={relCourse.image}
                       alt={relCourse.imageAlt || `Foto ilustrativa do curso ${relCourse.title}`}
+                      width={400}
+                      height={160}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />

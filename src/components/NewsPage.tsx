@@ -4,7 +4,7 @@ import { fetchBlogPosts } from '../lib/supabase';
 import { matchesAny } from '../lib/text';
 import { trackSearch } from '../lib/analytics';
 import { BLOG_CATEGORIES, articleMatchesBlogCategory, wixBlogCategoryLabel } from '../data/siteUrls';
-import newsBannerImg from '../assets/images/Cabeçalho (9).jpg';
+import newsBannerImg from '../assets/images/Cabeçalho (9).webp';
 import {
   Search,
   Calendar,
@@ -137,6 +137,10 @@ export const NewsPage: React.FC<NewsPageProps> = ({
             <img
               src={newsBannerImg}
               alt=""
+              width={1600}
+              height={500}
+              decoding="async"
+              fetchPriority="high"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center filter brightness-100 contrast-105"
             />
@@ -369,6 +373,10 @@ export const NewsPage: React.FC<NewsPageProps> = ({
                         <img
                           src={article.image}
                           alt={article.title}
+                          width={400}
+                          height={176}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (

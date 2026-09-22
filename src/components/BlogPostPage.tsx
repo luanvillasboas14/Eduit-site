@@ -174,6 +174,10 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                 <img
                   src={article.image}
                   alt={article.title}
+                  width={1200}
+                  height={514}
+                  decoding="async"
+                  fetchPriority="high"
                   className="w-full h-full object-cover"
                 />
               </div>

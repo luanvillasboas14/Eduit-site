@@ -3,7 +3,7 @@ import { previewText, useCourses } from '../lib/courses';
 import { matchesAny, textMatches } from '../lib/text';
 import { trackSearch } from '../lib/analytics';
 import { Course } from '../types';
-import coursesBannerImg from '../assets/images/graduação.jpg';
+import coursesBannerImg from '../assets/images/graduação.webp';
 import { 
   Search, 
   Filter, 
@@ -137,6 +137,10 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             <img
               src={coursesBannerImg}
               alt=""
+              width={1600}
+              height={500}
+              decoding="async"
+              fetchPriority="high"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center filter brightness-100 contrast-105"
             />
@@ -402,6 +406,10 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                         <img
                           src={course.image}
                           alt={course.imageAlt || `Foto ilustrativa do curso ${course.title}`}
+                          width={400}
+                          height={128}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />

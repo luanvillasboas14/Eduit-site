@@ -1,5 +1,4 @@
 import { Course, NewsArticle, Polo } from '../types';
-import { POLOS_DATA } from './polos';
 
 /** Paths iguais aos slugs do Wix (eduit.com.br). Sem rotas inventadas. */
 export const PATHS = {
@@ -150,13 +149,6 @@ export function poloPath(polo: Polo): string {
 
 export function postPath(article: NewsArticle): string {
   return `/post/${article.id}`;
-}
-
-export function findPoloBySlug(slug: string | undefined): Polo | undefined {
-  if (!slug) return undefined;
-  const id = Object.keys(POLO_SLUGS).find((key) => POLO_SLUGS[key] === slug);
-  if (id) return POLOS_DATA.find((polo) => polo.id === id);
-  return POLOS_DATA.find((polo) => polo.id === slug);
 }
 
 export function isListingPath(pathname: string): boolean {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { ArrowRight, MessageSquare, ChevronDown } from 'lucide-react';
-import bannerImg from '../assets/images/Banner_Novo site cruzeiro.png';
 
 interface HeroProps {
   onOpenConsultant: () => void;
@@ -11,15 +10,19 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({
   onOpenConsultant,
   onExploreCourses,
-  onOpenVideo,
+  onOpenVideo: _onOpenVideo,
 }) => {
   return (
     <section className="relative min-h-[300px] sm:min-h-[480px] lg:min-h-[580px] flex flex-col justify-between pt-4 sm:pt-8 pb-3 sm:pb-4 overflow-hidden bg-[#070d19]">
       {/* Background image banner */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
-          src={bannerImg}
+          src="/hero.webp"
           alt=""
+          width={1920}
+          height={800}
+          decoding="async"
+          fetchPriority="high"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-right md:object-center opacity-90 filter brightness-100 contrast-105"
         />

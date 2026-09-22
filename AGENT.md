@@ -12,6 +12,13 @@
 - **Alternativas descartadas:** Biblioteca de SEO/analytics; sitemap estático no build; redirecionar 404 para a Home.
 - **Impacto:** Produção precisa de `VITE_GA_MEASUREMENT_ID` no build. Sitemap/canonical usam `SITE_URL` (hoje `https://banco-site-eduit.6tqx2r.easypanel.host`). Trocar para `https://eduit.com.br` quando o domínio definitivo estiver no ar.
 
+### 2026-09-22 - PageSpeed (LCP, JS, gzip, imagens)
+
+- **Decisão:** Gzip + cache no Express, code-split das rotas, listagem de cursos sem textos longos, WebP nas fotos de polo/banners, hero em `/hero.webp` com preload, GA adiado.
+- **Contexto:** Relatórios PageSpeed desktop/mobile da home. Sem lib nova no app e sem mudança de layout.
+- **Alternativas descartadas:** Pacote `compression`; reescrever o front; carregar todas as páginas no bundle inicial.
+- **Impacto:** Home baixa menos JS/JSON. Polos deixam de puxar PNGs de ~2 MB. Reconverter imagens: `npx sharp` + `node scripts/compress-images.mjs` (sharp só no script, não no app).
+
 ### 2026-09-16 - Cursos no Postgres site_anhanguera
 
 - **Decisão:** Catálogo de graduação e pós vive no Postgres `site_anhanguera`. O front Vite não conecta no banco; a API Express em `/api/cursos` lê as tabelas `cursos` e `curso_ofertas`.

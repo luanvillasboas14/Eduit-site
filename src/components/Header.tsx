@@ -35,6 +35,10 @@ export const Header: React.FC<HeaderProps> = ({
             <img
               src={logoImg}
               alt="Logo da Cruzeiro do Sul Virtual"
+              width={240}
+              height={48}
+              decoding="async"
+              fetchPriority="high"
               className="h-10 sm:h-12 w-auto max-w-[200px] sm:max-w-[240px] object-contain group-hover:scale-105 transition-transform duration-200"
             />
           </Link>

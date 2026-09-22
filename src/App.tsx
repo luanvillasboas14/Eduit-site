@@ -1,24 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { FeaturedCourses } from './components/FeaturedCourses';
-import { CoursesPage } from './components/CoursesPage';
-import { PostGradPage } from './components/PostGradPage';
-import { PoloDetailPage } from './components/PoloDetailPage';
-import { CourseDetailPage } from './components/CourseDetailPage';
 import { EntryMethodsSection } from './components/EntryMethodsSection';
 import { NewsSection } from './components/NewsSection';
-import { NewsPage } from './components/NewsPage';
-import { BlogPostPage } from './components/BlogPostPage';
 import { Footer } from './components/Footer';
-import { SearchPage } from './components/SearchPage';
-import { NotFoundPage } from './components/NotFoundPage';
 import { Seo } from './components/Seo';
-
-import { CourseModal } from './components/CourseModal';
-import { ConsultantModal } from './components/ConsultantModal';
-import { VideoModal } from './components/VideoModal';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { ScrollToTopButton } from './components/ScrollToTopButton';
 
@@ -38,11 +26,52 @@ import {
   POS_CATEGORY_ROUTES,
   blogCategoryPath,
   coursePath,
-  findPoloBySlug,
   isPostgradCourse,
   poloPath,
   postPath,
 } from './data/siteUrls';
+
+const CoursesPage = lazy(() =>
+  import('./components/CoursesPage').then((m) => ({ default: m.CoursesPage })),
+);
+const PostGradPage = lazy(() =>
+  import('./components/PostGradPage').then((m) => ({ default: m.PostGradPage })),
+);
+const CourseDetailPage = lazy(() =>
+  import('./components/CourseDetailPage').then((m) => ({ default: m.CourseDetailPage })),
+);
+const NewsPage = lazy(() =>
+  import('./components/NewsPage').then((m) => ({ default: m.NewsPage })),
+);
+const BlogPostPage = lazy(() =>
+  import('./components/BlogPostPage').then((m) => ({ default: m.BlogPostPage })),
+);
+const SearchPage = lazy(() =>
+  import('./components/SearchPage').then((m) => ({ default: m.SearchPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('./components/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+);
+const CourseModal = lazy(() =>
+  import('./components/CourseModal').then((m) => ({ default: m.CourseModal })),
+);
+const ConsultantModal = lazy(() =>
+  import('./components/ConsultantModal').then((m) => ({ default: m.ConsultantModal })),
+);
+const VideoModal = lazy(() =>
+  import('./components/VideoModal').then((m) => ({ default: m.VideoModal })),
+);
+const PoloDetailRoute = lazy(() =>
+  import('./routes/PoloDetailRoute').then((m) => ({ default: m.PoloDetailRoute })),
+);
+
+function PageFallback() {
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center text-slate-400 text-sm">
+      Carregando...
+    </div>
+  );
+}
 
 function ScrollToTop() {
   const { pathname, search } = useLocation();
@@ -104,6 +133,7 @@ export default function App() {
       />
 
       <main>
+        <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route
             path={PATHS.home}
@@ -305,31 +335,44 @@ export default function App() {
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
       </main>
 
       <Footer onOpenConsultant={() => handleOpenConsultant()} />
 
-      <CourseModal
-        course={modalCourse}
-        onClose={() => setModalCourse(null)}
-        onOpenConsultantWithCourse={(title) => handleOpenConsultant(title)}
-      />
+      <Suspense fallback={null}>
+        {modalCourse && (
+          <CourseModal
+            course={modalCourse}
+            onClose={() => setModalCourse(null)}
+            onOpenConsultantWithCourse={(title) => handleOpenConsultant(title)}
+          />
+        )}
+      </Suspense>
 
-      <ConsultantModal
-        isOpen={isConsultantOpen}
-        onClose={() => {
-          setIsConsultantOpen(false);
-          setConsultantPoloName('');
-        }}
-        defaultCourse={consultantCourseTitle}
-        defaultPolo={consultantPoloName}
-      />
+      <Suspense fallback={null}>
+        {isConsultantOpen && (
+          <ConsultantModal
+            isOpen={isConsultantOpen}
+            onClose={() => {
+              setIsConsultantOpen(false);
+              setConsultantPoloName('');
+            }}
+            defaultCourse={consultantCourseTitle}
+            defaultPolo={consultantPoloName}
+          />
+        )}
+      </Suspense>
 
-      <VideoModal
-        isOpen={isVideoOpen}
-        onClose={() => setIsVideoOpen(false)}
-        onOpenConsultant={() => handleOpenConsultant()}
-      />
+      <Suspense fallback={null}>
+        {isVideoOpen && (
+          <VideoModal
+            isOpen={isVideoOpen}
+            onClose={() => setIsVideoOpen(false)}
+            onOpenConsultant={() => handleOpenConsultant()}
+          />
+        )}
+      </Suspense>
 
       <FloatingWhatsApp onOpenConsultant={() => handleOpenConsultant()} />
       <ScrollToTopButton />
@@ -392,37 +435,6 @@ function CourseDetailRoute({
       }
       onSelectPolo={onSelectPolo}
       onNavigatePolos={() => navigate(PATHS.home)}
-    />
-  );
-}
-
-function PoloDetailRoute({
-  onSelectCourse,
-  onSelectPolo,
-  onOpenConsultant,
-}: {
-  onSelectCourse: (course: Course) => void;
-  onSelectPolo: (polo: Polo) => void;
-  onOpenConsultant: (courseTitle?: string, poloName?: string) => void;
-}) {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-  const slug = pathname.replace(/^\//, '');
-  const polo = findPoloBySlug(slug);
-
-  if (!polo) {
-    return <NotFoundPage />;
-  }
-
-  return (
-    <PoloDetailPage
-      polo={polo}
-      onBackToPolos={() => navigate(PATHS.home)}
-      onOpenConsultant={(name) => onOpenConsultant(name || polo.name)}
-      onSelectCourse={onSelectCourse}
-      onNavigateGraduation={() => navigate(PATHS.graduacao)}
-      onNavigatePostGrad={() => navigate(PATHS.posGraduacao)}
-      onSelectOtherPolo={onSelectPolo}
     />
   );
 }

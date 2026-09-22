@@ -78,6 +78,10 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
                 <img
                   src={article.image}
                   alt={article.title}
+                  width={400}
+                  height={144}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-[#0b1329]/30 to-transparent" />
@@ -138,6 +142,10 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
               <img
                 src={featuredArticle.image}
                 alt={featuredArticle.title}
+                width={800}
+                height={192}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0b1329] via-transparent to-transparent" />

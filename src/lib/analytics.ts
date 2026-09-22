@@ -22,10 +22,22 @@ export function initAnalytics(): void {
   window.gtag('js', new Date());
   window.gtag('config', MEASUREMENT_ID, { send_page_view: false });
 
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(MEASUREMENT_ID)}`;
-  document.head.appendChild(script);
+  const load = () => {
+    if (document.querySelector('script[data-ga4]')) return;
+    const script = document.createElement('script');
+    script.async = true;
+    script.dataset.ga4 = 'true';
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(MEASUREMENT_ID)}`;
+    document.head.appendChild(script);
+  };
+
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void })
+    .requestIdleCallback;
+  if (typeof idle === 'function') {
+    idle(load, { timeout: 4000 });
+  } else {
+    window.addEventListener('load', () => window.setTimeout(load, 1), { once: true });
+  }
 
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement | null;

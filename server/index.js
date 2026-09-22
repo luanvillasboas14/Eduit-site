@@ -3,24 +3,18 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { attachPublicRoutes } from './public.js';
 import { createCursosRouter } from './cursos.js';
+import { attachGzipJson, attachSpaStatic } from './static.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT || 80);
 
+attachGzipJson(app);
 attachPublicRoutes(app);
 app.use('/api/cursos', createCursosRouter());
 
 if (process.env.NODE_ENV === 'production') {
-  const dist = path.resolve(__dirname, '../dist');
-  app.use(express.static(dist));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      next();
-      return;
-    }
-    res.sendFile(path.join(dist, 'index.html'));
-  });
+  attachSpaStatic(app, path.resolve(__dirname, '../dist'));
 }
 
 app.listen(port, '0.0.0.0', () => {

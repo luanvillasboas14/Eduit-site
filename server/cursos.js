@@ -1,7 +1,28 @@
 import { Router } from 'express';
 import { pool } from './db.js';
 
-const SELECT_CURSOS = `
+const SELECT_LIST = `
+  SELECT
+    c.id,
+    c.slug,
+    c.tipo,
+    c.titulo,
+    c.categoria,
+    c.categoria_raw,
+    c.category_badge,
+    left(c.sobre, 400) AS sobre,
+    c.imagem,
+    c.url_path,
+    c.formacao,
+    c.duracao,
+    c.modalidade,
+    c.preco,
+    c.img_alt,
+    c.featured
+  FROM cursos c
+`;
+
+const SELECT_DETAIL = `
   SELECT
     c.id,
     c.slug,
@@ -57,8 +78,8 @@ export function createCursosRouter() {
     }
     try {
       const result = tipo
-        ? await pool.query(`${SELECT_CURSOS} WHERE c.tipo = $1 GROUP BY c.id ORDER BY c.titulo`, [tipo])
-        : await pool.query(`${SELECT_CURSOS} GROUP BY c.id ORDER BY c.tipo, c.titulo`);
+        ? await pool.query(`${SELECT_LIST} WHERE c.tipo = $1 ORDER BY c.titulo`, [tipo])
+        : await pool.query(`${SELECT_LIST} ORDER BY c.tipo, c.titulo`);
       res.json(result.rows);
     } catch (error) {
       console.error('GET /api/cursos', error);
@@ -68,7 +89,7 @@ export function createCursosRouter() {
 
   router.get('/:slug', async (req, res) => {
     try {
-      const result = await pool.query(`${SELECT_CURSOS} WHERE c.slug = $1 GROUP BY c.id`, [
+      const result = await pool.query(`${SELECT_DETAIL} WHERE c.slug = $1 GROUP BY c.id`, [
         req.params.slug,
       ]);
       if (!result.rows[0]) {
