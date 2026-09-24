@@ -81,6 +81,9 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
         email: leadEmail,
         celular: leadPhone,
         tipo: 'Graduação',
+        formulario: 'blog_lead',
+        artigo: article.title,
+        artigo_id: article.id,
       });
       trackFormSubmit('blog_lead', { article_id: article.id });
       setIsSubmitted(true);

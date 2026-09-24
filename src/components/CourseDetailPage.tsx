@@ -126,6 +126,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         email,
         celular: phone,
         tipo: leadTipoFromCourse(course.title, isPostGrad),
+        formulario: 'curso_detalhe',
+        curso: course.title,
+        curso_id: course.id,
+        duracao: displayDuration,
+        modalidade: displayModality,
+        preco: displayPrice > 0 ? String(displayPrice) : '',
       });
       trackFormSubmit('curso_detalhe', { course_title: course.title });
       setIsSubmitted(true);

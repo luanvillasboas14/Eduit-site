@@ -42,6 +42,12 @@ export const CourseModal: React.FC<CourseModalProps> = ({
         email: studentEmail,
         celular: studentPhone,
         tipo: leadTipoFromCourse(course.title, course.categoryBadge === 'PÓS-GRADUAÇÃO'),
+        formulario: 'curso_modal',
+        curso: course.title,
+        curso_id: course.id,
+        duracao: course.duration,
+        modalidade: course.modality,
+        preco: course.price > 0 ? String(course.price) : '',
       });
       trackFormSubmit('curso_modal', { course_id: course.id, course_title: course.title });
       setEnrolled(true);

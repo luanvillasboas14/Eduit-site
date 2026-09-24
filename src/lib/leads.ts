@@ -9,8 +9,40 @@ export type LeadPayload = {
   celular: string;
   tipo: LeadTipo;
   politica_privacidade: boolean;
-  gclid: string;
   origem: string;
+  formulario: string;
+  curso: string;
+  curso_id: string;
+  polo: string;
+  artigo: string;
+  artigo_id: string;
+  duracao: string;
+  modalidade: string;
+  preco: string;
+  pagina: string;
+  pagina_titulo: string;
+  landing_page: string;
+  landing_query: string;
+  referrer: string;
+  user_agent: string;
+  ga_client_id: string;
+  ga_session_id: string;
+  gclid: string;
+  gbraid: string;
+  wbraid: string;
+  gclsrc: string;
+  dclid: string;
+  gad_source: string;
+  gad_campaignid: string;
+  fbclid: string;
+  msclkid: string;
+  ttclid: string;
+  utm_source: string;
+  utm_medium: string;
+  utm_campaign: string;
+  utm_term: string;
+  utm_content: string;
+  utm_id: string;
 };
 
 export function digitsOnly(value: string): string {
@@ -53,22 +85,115 @@ export function formatPhoneBR(value: string): string {
   return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
 }
 
-export function captureGclidFromUrl(): void {
+const CLICK_IDS = [
+  'gclid',
+  'gbraid',
+  'wbraid',
+  'gclsrc',
+  'dclid',
+  'gad_source',
+  'gad_campaignid',
+  'fbclid',
+  'msclkid',
+  'ttclid',
+  'twclid',
+  'li_fat_id',
+] as const;
+
+const UTM_KEYS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+  'utm_id',
+  'utm_source_platform',
+  'utm_creative_format',
+  'utm_marketing_tactic',
+] as const;
+
+const TRACKING_KEYS = [...CLICK_IDS, ...UTM_KEYS];
+const STORAGE_KEY = 'eduit_attribution';
+
+export function trackingFromSearch(search: string): Record<string, string> {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  const found: Record<string, string> = {};
+  for (const [key, value] of params.entries()) {
+    const name = key.toLowerCase();
+    const text = value.trim();
+    if (!text) continue;
+    if (TRACKING_KEYS.includes(name as (typeof TRACKING_KEYS)[number]) || name.startsWith('utm_')) {
+      found[name] = text;
+    }
+  }
+  return found;
+}
+
+export function gclidFromCookie(cookie: string): string {
+  const match = cookie.match(/(?:^|;\s*)_gcl_aw=([^;]*)/);
+  if (!match) return '';
+  const parts = decodeURIComponent(match[1]).split('.');
+  return parts.length >= 3 ? parts.slice(2).join('.').trim() : '';
+}
+
+export function gaClientIdFromCookie(cookie: string): string {
+  const match = cookie.match(/(?:^|;\s*)_ga=GA\d+\.\d+\.(\d+\.\d+)/);
+  return match?.[1] || '';
+}
+
+export function gaSessionIdFromCookie(cookie: string): string {
+  const match = cookie.match(/(?:^|;\s*)_ga_[A-Z0-9]+=GS\d+\.\d+\.(\d+)/i);
+  return match?.[1] || '';
+}
+
+function readStoredAttribution(): Record<string, string> {
   try {
-    const gclid = new URLSearchParams(window.location.search).get('gclid');
-    if (gclid) sessionStorage.setItem('gclid', gclid);
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    );
+  } catch {
+    return {};
+  }
+}
+
+export function captureGclidFromUrl(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = trackingFromSearch(window.location.search);
+    const stored = readStoredAttribution();
+    const next = { ...stored, ...current };
+    if (!next.landing_page) {
+      next.landing_page = window.location.href;
+      next.landing_query = window.location.search.replace(/^\?/, '');
+    }
+    if (!next.referrer && document.referrer) next.referrer = document.referrer;
+    const cookieGclid = gclidFromCookie(document.cookie);
+    if (!next.gclid && cookieGclid) next.gclid = cookieGclid;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    if (next.gclid) sessionStorage.setItem('gclid', next.gclid);
   } catch {
     /* ignore */
   }
 }
 
-export function getGclid(): string {
+function blankTracking(): Record<string, string> {
+  return Object.fromEntries(
+    [...CLICK_IDS, ...UTM_KEYS, 'landing_page', 'landing_query', 'referrer'].map((key) => [key, '']),
+  );
+}
+
+export function getAttribution(): Record<string, string> {
   captureGclidFromUrl();
-  try {
-    return sessionStorage.getItem('gclid') || '';
-  } catch {
-    return '';
-  }
+  const tracking = { ...blankTracking(), ...readStoredAttribution() };
+  if (typeof document === 'undefined') return tracking;
+  if (!tracking.gclid) tracking.gclid = gclidFromCookie(document.cookie);
+  tracking.ga_client_id = gaClientIdFromCookie(document.cookie);
+  tracking.ga_session_id = gaSessionIdFromCookie(document.cookie);
+  return tracking;
 }
 
 export function leadTipoFromCourse(title?: string, isPostGrad?: boolean): LeadTipo {
@@ -91,21 +216,67 @@ export async function submitLead(input: {
   email: string;
   celular: string;
   tipo: LeadTipo;
+  formulario: string;
+  curso?: string;
+  curso_id?: string;
+  polo?: string;
+  artigo?: string;
+  artigo_id?: string;
+  duracao?: string;
+  modalidade?: string;
+  preco?: string;
 }): Promise<void> {
+  const tracking = getAttribution();
   const payload: LeadPayload = {
     nome: input.nome.trim(),
     email: input.email.trim(),
     celular: digitsOnly(input.celular),
     tipo: input.tipo,
     politica_privacidade: true,
-    gclid: getGclid(),
     origem: 'form-eduit',
+    formulario: input.formulario,
+    curso: input.curso?.trim() || '',
+    curso_id: input.curso_id?.trim() || '',
+    polo: input.polo?.trim() || '',
+    artigo: input.artigo?.trim() || '',
+    artigo_id: input.artigo_id?.trim() || '',
+    duracao: input.duracao?.trim() || '',
+    modalidade: input.modalidade?.trim() || '',
+    preco: input.preco?.trim() || '',
+    pagina: typeof window !== 'undefined' ? window.location.href : '',
+    pagina_titulo: typeof document !== 'undefined' ? document.title : '',
+    landing_page: tracking.landing_page || '',
+    landing_query: tracking.landing_query || '',
+    referrer: tracking.referrer || '',
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    ga_client_id: tracking.ga_client_id || '',
+    ga_session_id: tracking.ga_session_id || '',
+    gclid: tracking.gclid || '',
+    gbraid: tracking.gbraid || '',
+    wbraid: tracking.wbraid || '',
+    gclsrc: tracking.gclsrc || '',
+    dclid: tracking.dclid || '',
+    gad_source: tracking.gad_source || '',
+    gad_campaignid: tracking.gad_campaignid || '',
+    fbclid: tracking.fbclid || '',
+    msclkid: tracking.msclkid || '',
+    ttclid: tracking.ttclid || '',
+    utm_source: tracking.utm_source || '',
+    utm_medium: tracking.utm_medium || '',
+    utm_campaign: tracking.utm_campaign || '',
+    utm_term: tracking.utm_term || '',
+    utm_content: tracking.utm_content || '',
+    utm_id: tracking.utm_id || '',
   };
+
+  const extras = Object.fromEntries(
+    Object.entries(tracking).filter(([key, value]) => value && !(key in payload)),
+  );
 
   const response = await fetch(LEAD_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, ...extras }),
   });
 
   if (!response.ok) {

@@ -92,6 +92,12 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
         email,
         celular: phone,
         tipo: leadTipoFromCourse(selectedCourseTitle, matchedCourse?.categoryBadge === 'PÓS-GRADUAÇÃO'),
+        formulario: 'consultor_modal',
+        curso: selectedCourseTitle,
+        curso_id: matchedCourse?.id,
+        polo: defaultPolo,
+        modalidade: matchedCourse?.modality,
+        preco: coursePrice > 0 ? String(coursePrice) : '',
       });
       trackFormSubmit('consultor_modal', { course_title: selectedCourseTitle });
       setSubmitted(true);

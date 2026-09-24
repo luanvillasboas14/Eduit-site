@@ -98,6 +98,8 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
         email,
         celular: phone,
         tipo: 'Graduação',
+        formulario: 'polo_contato',
+        polo: polo.name,
       });
       trackFormSubmit('polo_contato', { polo_name: polo.name });
       setIsSubmitted(true);
