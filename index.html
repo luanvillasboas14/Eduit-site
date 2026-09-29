@@ -8,6 +8,33 @@
     <meta name="description" content="Cursos de graduação e pós-graduação EAD da Cruzeiro do Sul Virtual. Consulte bolsas, polos de apoio e formas de ingresso." />
     <link rel="preload" as="image" href="/hero.webp" fetchpriority="high" />
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <script>
+      (function () {
+        try {
+          var keys = ['gclid','gbraid','wbraid','gclsrc','dclid','gad_source','gad_campaignid','fbclid','msclkid','ttclid','twclid','li_fat_id','utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id','utm_source_platform','utm_creative_format','utm_marketing_tactic'];
+          var params = new URLSearchParams(location.search);
+          var found = {};
+          params.forEach(function (value, key) {
+            var name = key.toLowerCase();
+            var text = (value || '').trim();
+            if (!text) return;
+            if (keys.indexOf(name) !== -1 || name.indexOf('utm_') === 0) found[name] = text;
+          });
+          var raw = sessionStorage.getItem('eduit_attribution') || localStorage.getItem('eduit_attribution') || '{}';
+          var stored = JSON.parse(raw);
+          if (!stored || typeof stored !== 'object') stored = {};
+          var next = Object.assign({}, stored, found);
+          if (!next.landing_page) {
+            next.landing_page = location.href;
+            next.landing_query = location.search.replace(/^\?/, '');
+          }
+          if (!next.referrer && document.referrer) next.referrer = document.referrer;
+          var json = JSON.stringify(next);
+          sessionStorage.setItem('eduit_attribution', json);
+          localStorage.setItem('eduit_attribution', json);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

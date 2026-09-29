@@ -146,10 +146,9 @@ export function gaSessionIdFromCookie(cookie: string): string {
   return match?.[1] || '';
 }
 
-function readStoredAttribution(): Record<string, string> {
+function parseAttribution(raw: string | null): Record<string, string> {
+  if (!raw) return {};
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
     return Object.fromEntries(
@@ -157,6 +156,30 @@ function readStoredAttribution(): Record<string, string> {
     );
   } catch {
     return {};
+  }
+}
+
+function readStoredAttribution(): Record<string, string> {
+  try {
+    const session = parseAttribution(sessionStorage.getItem(STORAGE_KEY));
+    const local = parseAttribution(localStorage.getItem(STORAGE_KEY));
+    return { ...local, ...session };
+  } catch {
+    return {};
+  }
+}
+
+function writeAttribution(value: Record<string, string>): void {
+  const json = JSON.stringify(value);
+  try {
+    sessionStorage.setItem(STORAGE_KEY, json);
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, json);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -173,7 +196,7 @@ export function captureGclidFromUrl(): void {
     if (!next.referrer && document.referrer) next.referrer = document.referrer;
     const cookieGclid = gclidFromCookie(document.cookie);
     if (!next.gclid && cookieGclid) next.gclid = cookieGclid;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    writeAttribution(next);
     if (next.gclid) sessionStorage.setItem('gclid', next.gclid);
   } catch {
     /* ignore */
