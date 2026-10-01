@@ -86,12 +86,13 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
     }
     setError('');
     setIsSending(true);
+    const tipo = leadTipoFromCourse(selectedCourseTitle, matchedCourse?.categoryBadge === 'PÓS-GRADUAÇÃO');
     try {
       await submitLead({
         nome: name,
         email,
         celular: phone,
-        tipo: leadTipoFromCourse(selectedCourseTitle, matchedCourse?.categoryBadge === 'PÓS-GRADUAÇÃO'),
+        tipo,
         formulario: 'consultor_modal',
         curso: selectedCourseTitle,
         curso_id: matchedCourse?.id,
@@ -99,7 +100,13 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
         modalidade: matchedCourse?.modality,
         preco: coursePrice > 0 ? String(coursePrice) : '',
       });
-      trackFormSubmit('consultor_modal', { course_title: selectedCourseTitle });
+      trackFormSubmit({
+        formName: 'consultor_modal',
+        leadType: tipo,
+        courseTitle: selectedCourseTitle,
+        email,
+        phone,
+      });
       setSubmitted(true);
     } catch {
       setError('Não foi possível enviar. Tente novamente.');

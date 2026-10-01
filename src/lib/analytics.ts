@@ -61,9 +61,20 @@ export function initAnalytics(): void {
   });
 }
 
+function track(event: string, params: Record<string, unknown> = {}): void {
+  if (typeof window === 'undefined') return;
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event, ...params });
+}
+
+function phoneForAds(phone: string): string {
+  const digits = phone.replace(/\D/g, '').replace(/^55/, '');
+  return digits ? `+55${digits}` : '';
+}
+
 export function trackPageView(path: string, title?: string): void {
   initAnalytics();
-  gtag('event', 'page_view', {
+  track('page_view', {
     page_path: path,
     page_title: title || document.title,
     page_location: typeof window !== 'undefined' ? window.location.href : path,
@@ -71,7 +82,7 @@ export function trackPageView(path: string, title?: string): void {
 }
 
 export function trackEvent(name: string, params?: Record<string, unknown>): void {
-  gtag('event', name, params);
+  track(name, params);
 }
 
 export function trackSearch(query: string, scope: string): void {
@@ -96,8 +107,22 @@ export function trackWhatsApp(href?: string): void {
   trackEvent('whatsapp_click', { link_url: href });
 }
 
-export function trackFormSubmit(formName: string, extra?: Record<string, unknown>): void {
-  trackEvent('generate_lead', { form_name: formName, ...extra });
+export function trackFormSubmit(input: {
+  formName: string;
+  leadType: string;
+  courseTitle?: string;
+  email?: string;
+  phone?: string;
+}): void {
+  track('generate_lead', {
+    form_name: input.formName,
+    lead_type: input.leadType,
+    course_title: input.courseTitle || '',
+    user_data: {
+      email: input.email?.trim() || '',
+      phone_number: phoneForAds(input.phone || ''),
+    },
+  });
 }
 
 export function trackOutbound(href: string, linkText?: string): void {

@@ -85,7 +85,12 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
         artigo: article.title,
         artigo_id: article.id,
       });
-      trackFormSubmit('blog_lead', { article_id: article.id });
+      trackFormSubmit({
+        formName: 'blog_lead',
+        leadType: 'Graduação',
+        email: leadEmail,
+        phone: leadPhone,
+      });
       setIsSubmitted(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');

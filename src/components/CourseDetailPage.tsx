@@ -120,12 +120,13 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     }
     setFormError('');
     setIsSending(true);
+    const tipo = leadTipoFromCourse(course.title, isPostGrad);
     try {
       await submitLead({
         nome: name,
         email,
         celular: phone,
-        tipo: leadTipoFromCourse(course.title, isPostGrad),
+        tipo,
         formulario: 'curso_detalhe',
         curso: course.title,
         curso_id: course.id,
@@ -133,7 +134,13 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         modalidade: displayModality,
         preco: displayPrice > 0 ? String(displayPrice) : '',
       });
-      trackFormSubmit('curso_detalhe', { course_title: course.title });
+      trackFormSubmit({
+        formName: 'curso_detalhe',
+        leadType: tipo,
+        courseTitle: course.title,
+        email,
+        phone,
+      });
       setIsSubmitted(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');

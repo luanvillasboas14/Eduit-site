@@ -101,7 +101,12 @@ export const PoloDetailPage: React.FC<PoloDetailPageProps> = ({
         formulario: 'polo_contato',
         polo: polo.name,
       });
-      trackFormSubmit('polo_contato', { polo_name: polo.name });
+      trackFormSubmit({
+        formName: 'polo_contato',
+        leadType: 'Graduação',
+        email,
+        phone,
+      });
       setIsSubmitted(true);
     } catch {
       setFormError('Não foi possível enviar. Tente novamente.');
