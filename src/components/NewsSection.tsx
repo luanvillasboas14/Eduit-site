@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
 import { fetchBlogPosts } from '../lib/supabase';
+import { directCoverUrl } from '../lib/articleHtml';
 import { wixBlogCategoryLabel } from '../data/siteUrls';
 import { ArrowRight, Clock, Calendar, HelpCircle } from 'lucide-react';
 
@@ -76,7 +77,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
                 className="relative h-36 overflow-hidden cursor-pointer"
               >
                 <img
-                  src={article.image}
+                  src={directCoverUrl(article.image)}
                   alt={article.title}
                   width={400}
                   height={144}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { NewsArticle } from '../types';
 import { X, Calendar, Clock, Share2, ArrowRight } from 'lucide-react';
+import { BlogArticleBody } from './BlogArticleBody';
+import { directCoverUrl } from '../lib/articleHtml';
 
 interface NewsModalProps {
   article: NewsArticle | null;
@@ -77,7 +79,7 @@ export const NewsModal: React.FC<NewsModalProps> = ({
         {article.image && (
           <div className="rounded-2xl overflow-hidden h-64 sm:h-72 border border-slate-800">
             <img
-              src={article.image}
+              src={directCoverUrl(article.image)}
               alt={article.title}
               className="w-full h-full object-cover"
             />
@@ -85,9 +87,10 @@ export const NewsModal: React.FC<NewsModalProps> = ({
         )}
 
         {/* Article Content */}
-        <div className="text-xs sm:text-sm text-slate-300 space-y-4 leading-relaxed whitespace-pre-line">
-          {article.content}
-        </div>
+        <BlogArticleBody
+          content={article.content || ''}
+          className="text-xs sm:text-sm text-slate-300"
+        />
 
         {/* Tags */}
         {article.tags && article.tags.length > 0 && (

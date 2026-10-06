@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { NewsArticle } from '../types';
 import { fetchRelatedPosts } from '../lib/supabase';
+import { BlogArticleBody } from './BlogArticleBody';
+import { directCoverUrl } from '../lib/articleHtml';
 import { wixBlogCategoryLabel } from '../data/siteUrls';
-import { articleBodyHtml } from '../lib/article';
 import { formatPhoneBR, submitLead, validateLeadContact } from '../lib/leads';
 import { seoForPost } from '../lib/seo';
 import { Seo } from './Seo';
@@ -186,7 +187,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
             {article.image && (
               <div className="rounded-3xl overflow-hidden shadow-lg border border-slate-200 bg-slate-900 aspect-[16/9] sm:aspect-[21/9] w-full">
                 <img
-                  src={article.image}
+                  src={directCoverUrl(article.image)}
                   alt={article.title}
                   width={1200}
                   height={514}
@@ -199,9 +200,9 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
             {/* Article Content Body (Light Background Container for maximum readability) */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 text-slate-800 shadow-sm space-y-6">
-              <div
-                className="article-body max-w-none"
-                dangerouslySetInnerHTML={{ __html: articleBodyHtml(article.content) }}
+              <BlogArticleBody
+                content={article.content || ''}
+                className="text-sm sm:text-base text-slate-800"
               />
 
               {/* Tags Section */}

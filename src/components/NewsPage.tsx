@@ -3,6 +3,7 @@ import { NewsArticle } from '../types';
 import { fetchBlogPosts } from '../lib/supabase';
 import { matchesAny } from '../lib/text';
 import { trackSearch } from '../lib/analytics';
+import { directCoverUrl } from '../lib/articleHtml';
 import { BLOG_CATEGORIES, articleMatchesBlogCategory, wixBlogCategoryLabel } from '../data/siteUrls';
 import newsBannerImg from '../assets/images/Cabeçalho (9).webp';
 import {
@@ -371,7 +372,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
                     <div className="relative h-44 overflow-hidden bg-slate-900">
                       {article.image ? (
                         <img
-                          src={article.image}
+                          src={directCoverUrl(article.image)}
                           alt={article.title}
                           width={400}
                           height={176}
