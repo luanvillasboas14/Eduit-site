@@ -8,6 +8,7 @@ export const PATHS = {
   blog: '/blog',
   busca: '/busca',
   polos: '/polos',
+  privacidade: '/politica-de-privacidade',
 } as const;
 
 export type BlogCategory = {

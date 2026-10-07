@@ -254,7 +254,13 @@ export const CourseModal: React.FC<CourseModalProps> = ({
                       onChange={(e) => setPrivacy(e.target.checked)}
                       className="mt-0.5 accent-yellow-400"
                     />
-                    <span>Li e aceito a política de privacidade.</span>
+                    <span>
+                      Li e aceito a{' '}
+                      <a href="/politica-de-privacidade" className="underline hover:text-white">
+                        política de privacidade
+                      </a>
+                      .
+                    </span>
                   </label>
                   {formError && <p className="text-[11px] text-red-400">{formError}</p>}
                   <button

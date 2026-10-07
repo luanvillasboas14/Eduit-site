@@ -7,6 +7,7 @@ const STATIC_PATHS = [
   '/blog',
   '/busca',
   '/polos',
+  '/politica-de-privacidade',
   '/educacao',
   '/comunicacao',
   '/gestao-negocios',
@@ -71,6 +72,7 @@ Este site publica o catálogo de cursos, polos de apoio presencial, blog e formu
 - [Blog](${origin}/blog): notícias, dicas e dúvidas acadêmicas
 - [Polos](${origin}/polos): polos de apoio presencial
 - [Busca](${origin}/busca): pesquisa de cursos, polos e posts
+- [Política de Privacidade](${origin}/politica-de-privacidade): tratamento dos dados enviados pelos formulários
 
 ## Dados para agentes
 

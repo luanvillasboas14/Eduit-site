@@ -52,6 +52,9 @@ const SearchPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import('./components/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
 );
+const PrivacyPolicyPage = lazy(() =>
+  import('./components/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })),
+);
 const CourseModal = lazy(() =>
   import('./components/CourseModal').then((m) => ({ default: m.CourseModal })),
 );
@@ -349,6 +352,8 @@ export default function App() {
             />
             </React.Fragment>
           ))}
+
+          <Route path={PATHS.privacidade} element={<PrivacyPolicyPage />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

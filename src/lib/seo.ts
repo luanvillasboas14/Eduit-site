@@ -42,6 +42,11 @@ const STATIC_SEO: Record<string, SeoContent> = {
     description:
       'Encontre o polo EAD da Cruzeiro do Sul Virtual mais perto de você. Endereço, horários e atendimento em São Paulo e região.',
   },
+  [PATHS.privacidade]: {
+    title: `Política de Privacidade | ${BRAND}`,
+    description:
+      'Como a Cruzeiro do Sul Virtual trata nome, telefone, e-mail e dados de navegação enviados pelos formulários do site.',
+  },
   '/educacao': {
     title: `Graduação em Educação | ${BRAND}`,
     description: 'Cursos de graduação na área de Educação EAD da Cruzeiro do Sul Virtual.',
