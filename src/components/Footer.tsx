@@ -161,7 +161,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenConsultant }) => {
 
         {/* Bottom Legal */}
         <div className="pt-2.5 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500">
-          <p>© 2026 Cruzeiro do Sul Virtual — CNPJ 52.423.602/0001-55</p>
+          <p>© 2026 Eduit Freguesia Serviços de Apoio à Educação Ltda · polo parceiro Cruzeiro do Sul Virtual · CNPJ 52.423.602/0001-55</p>
           <div className="flex items-center gap-3">
             <Link to={PATHS.privacidade} className="hover:text-slate-300">Política de Privacidade</Link>
             <a href="#" className="hover:text-slate-300">Acessibilidade</a>

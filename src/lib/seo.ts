@@ -45,7 +45,7 @@ const STATIC_SEO: Record<string, SeoContent> = {
   [PATHS.privacidade]: {
     title: `Política de Privacidade | ${BRAND}`,
     description:
-      'Como a Cruzeiro do Sul Virtual trata nome, telefone, e-mail e dados de navegação enviados pelos formulários do site.',
+      'Como a Eduit Freguesia Serviços de Apoio à Educação Ltda, polo parceiro Cruzeiro do Sul Virtual, trata nome, telefone, e-mail e dados de navegação enviados pelos formulários do site.',
   },
   '/educacao': {
     title: `Graduação em Educação | ${BRAND}`,

@@ -20,21 +20,24 @@ export const PrivacyPolicyPage: React.FC = () => {
           <p className="text-xs font-bold uppercase tracking-widest text-yellow-700">Cruzeiro do Sul Virtual</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Política de Privacidade</h1>
           <p className="text-sm text-slate-600">
-            CNPJ 52.423.602/0001-55 · Atualizada em 7 de outubro de 2026
+            Eduit Freguesia Serviços de Apoio à Educação Ltda · polo parceiro Cruzeiro do Sul Virtual · CNPJ 52.423.602/0001-55
+            · Atualizada em 13 de outubro de 2026
           </p>
         </header>
 
         <section className="space-y-3 text-sm leading-relaxed text-slate-700">
           <h2 className="text-lg font-bold text-slate-900">Quem é o responsável</h2>
           <p>
-            Esta política descreve como a Cruzeiro do Sul Virtual, inscrita no CNPJ 52.423.602/0001-55,
-            trata os dados pessoais coletados em eduit.com.br, nos termos da Lei nº 13.709/2018
-            (Lei Geral de Proteção de Dados Pessoais — LGPD). O site apresenta cursos de graduação e
-            pós-graduação e recebe pedidos de contato sobre bolsas e matrícula.
+            Esta política descreve como a Eduit Freguesia Serviços de Apoio à Educação Ltda, polo
+            parceiro Cruzeiro do Sul Virtual, inscrita no CNPJ 52.423.602/0001-55, trata os dados
+            pessoais coletados em eduit.com.br, nos termos da Lei nº 13.709/2018 (Lei Geral de
+            Proteção de Dados Pessoais — LGPD). O site apresenta cursos de graduação e pós-graduação
+            e recebe pedidos de contato sobre bolsas e matrícula.
           </p>
           <p>
-            A Cruzeiro do Sul Virtual é a controladora desses dados. O tratamento segue os princípios
-            da LGPD, entre eles finalidade, necessidade, transparência e segurança.
+            A Eduit Freguesia Serviços de Apoio à Educação Ltda é a controladora desses dados. O
+            tratamento segue os princípios da LGPD, entre eles finalidade, necessidade, transparência
+            e segurança.
           </p>
         </section>
 
@@ -93,8 +96,8 @@ export const PrivacyPolicyPage: React.FC = () => {
         <section className="space-y-3 text-sm leading-relaxed text-slate-700">
           <h2 className="text-lg font-bold text-slate-900">Com quem os dados são compartilhados</h2>
           <p>
-            Os dados do formulário são enviados à equipe comercial da Cruzeiro do Sul Virtual para o
-            atendimento. Dados de navegação e de campanha podem ser tratados pelo Google, conforme as
+            Os dados do formulário são enviados à equipe comercial da Eduit Freguesia Serviços de Apoio
+            à Educação Ltda para o atendimento. Dados de navegação e de campanha podem ser tratados pelo Google, conforme as
             tags instaladas no site. Se a pessoa escolher falar pelo WhatsApp, a conversa segue na
             plataforma da Meta.
           </p>
@@ -114,8 +117,8 @@ export const PrivacyPolicyPage: React.FC = () => {
           <h2 className="text-lg font-bold text-slate-900">Encarregado pelo tratamento</h2>
           <p>
             O encarregado pelo tratamento de dados pessoais (art. 41 da LGPD) é o canal de privacidade
-            da Cruzeiro do Sul Virtual. O titular fala com o encarregado pelo WhatsApp comercial
-            (11) 91747-9873.
+            da Eduit Freguesia Serviços de Apoio à Educação Ltda. O titular fala com o encarregado pelo
+            WhatsApp comercial (11) 91747-9873.
           </p>
           <p>
             <a
