@@ -1,6 +1,8 @@
-import { createReadStream, existsSync, statSync } from 'fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'fs';
 import path from 'path';
-import { createGzip } from 'zlib';
+import { createGzip, gzipSync } from 'zlib';
+
+const PUBLIC_ORIGIN = 'https://www.eduit.com.br';
 
 const MIME = {
   '.js': 'text/javascript; charset=utf-8',
@@ -50,6 +52,62 @@ function safeResolve(root, urlPath) {
   return resolved;
 }
 
+export function canonicalHref(pathname) {
+  let pathOnly = String(pathname || '/').split('?')[0];
+  try {
+    pathOnly = decodeURIComponent(pathOnly);
+  } catch {
+    pathOnly = '/';
+  }
+  if (!pathOnly.startsWith('/')) pathOnly = `/${pathOnly}`;
+  if (pathOnly.length > 1 && pathOnly.endsWith('/')) pathOnly = pathOnly.slice(0, -1);
+  if (pathOnly.includes('..') || pathOnly.includes('\\') || pathOnly.includes('\0')) pathOnly = '/';
+  return `${PUBLIC_ORIGIN}${encodeURI(pathOnly)}`;
+}
+
+function escapeAttr(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+export function withCanonical(html, href) {
+  const safe = escapeAttr(href);
+  const link = `<link rel="canonical" href="${safe}" />`;
+  const og = `<meta property="og:url" content="${safe}" />`;
+  let next = html;
+  if (/<link\s+rel="canonical"[^>]*>/i.test(next)) {
+    next = next.replace(/<link\s+rel="canonical"[^>]*>/i, link);
+  } else {
+    next = next.replace('</head>', `    ${link}\n  </head>`);
+  }
+  if (/<meta\s+property="og:url"[^>]*>/i.test(next)) {
+    next = next.replace(/<meta\s+property="og:url"[^>]*>/i, og);
+  } else {
+    next = next.replace('</head>', `    ${og}\n  </head>`);
+  }
+  return next;
+}
+
+function sendIndex(req, res, filePath) {
+  const html = withCanonical(readFileSync(filePath, 'utf8'), canonicalHref(req.path));
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (req.method === 'HEAD') {
+    res.status(200).end();
+    return;
+  }
+  if (wantsGzip(req)) {
+    const gzipped = gzipSync(Buffer.from(html), { level: 6 });
+    res.setHeader('Content-Encoding', 'gzip');
+    res.setHeader('Vary', 'Accept-Encoding');
+    res.setHeader('Content-Length', gzipped.length);
+    res.end(gzipped);
+    return;
+  }
+  res.setHeader('Content-Length', Buffer.byteLength(html));
+  res.end(html);
+}
+
 function sendFile(req, res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const type = MIME[ext] || 'application/octet-stream';
@@ -88,6 +146,10 @@ export function attachSpaStatic(app, distDir) {
 
     const target = safeResolve(dist, req.path);
     if (target && existsSync(target) && statSync(target).isFile()) {
+      if (path.basename(target) === 'index.html') {
+        sendIndex(req, res, target);
+        return;
+      }
       sendFile(req, res, target);
       return;
     }
@@ -96,7 +158,7 @@ export function attachSpaStatic(app, distDir) {
       next();
       return;
     }
-    sendFile(req, res, indexFile);
+    sendIndex(req, res, indexFile);
   });
 }
 

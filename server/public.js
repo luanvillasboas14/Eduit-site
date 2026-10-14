@@ -45,7 +45,9 @@ const STATIC_PATHS = [
 ];
 
 function siteOrigin() {
-  return (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://banco-site-eduit.6tqx2r.easypanel.host').replace(/\/$/, '');
+  const env = (process.env.SITE_URL || process.env.VITE_SITE_URL || '').trim().replace(/\/$/, '');
+  if (env && !env.includes('easypanel.host')) return env;
+  return 'https://www.eduit.com.br';
 }
 
 function siteHost() {

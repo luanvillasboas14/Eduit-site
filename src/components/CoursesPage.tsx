@@ -132,7 +132,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
           <div className="absolute inset-0 z-0 overflow-hidden w-full h-full">
             <img
               src={coursesBannerImg}
-              alt=""
+              alt="O seu futuro começa aqui. Bolsas de até 50% e matrícula isenta na graduação"
               width={1600}
               height={500}
               decoding="async"

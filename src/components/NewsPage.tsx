@@ -137,7 +137,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({
           <div className="absolute inset-0 z-0 overflow-hidden w-full h-full">
             <img
               src={newsBannerImg}
-              alt=""
+              alt="Acompanhe nosso blog. Todo mês assuntos relevantes para o universitário"
               width={1600}
               height={500}
               decoding="async"

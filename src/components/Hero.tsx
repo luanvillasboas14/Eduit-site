@@ -18,7 +18,7 @@ export const Hero: React.FC<HeroProps> = ({
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
           src="/hero.webp"
-          alt=""
+          alt="Alunas estudando ao ar livre com caderno e laptop"
           width={1920}
           height={800}
           decoding="async"

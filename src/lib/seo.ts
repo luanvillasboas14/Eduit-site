@@ -156,6 +156,14 @@ export function seoForNotFound(): SeoContent {
   };
 }
 
+const PUBLIC_ORIGIN = 'https://www.eduit.com.br';
+
+function siteOrigin(): string {
+  const fromEnv = (import.meta.env.VITE_SITE_URL as string | undefined)?.trim().replace(/\/$/, '');
+  if (fromEnv && !fromEnv.includes('easypanel.host')) return fromEnv;
+  return PUBLIC_ORIGIN;
+}
+
 function upsertMeta(attr: 'name' | 'property', key: string, content: string): void {
   let el = document.head.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
   if (!el) {
@@ -173,16 +181,14 @@ export function applySeo({ title, description }: SeoContent, canonicalPath?: str
   upsertMeta('property', 'og:description', description);
   upsertMeta('property', 'og:type', 'website');
 
-  const site = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, '');
   const path = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '/');
-  if (site) {
-    let link = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'canonical';
-      document.head.appendChild(link);
-    }
-    link.href = `${site}${path}`;
-    upsertMeta('property', 'og:url', `${site}${path}`);
+  const href = `${siteOrigin()}${path.startsWith('/') ? path : `/${path}`}`;
+  let link = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'canonical';
+    document.head.appendChild(link);
   }
+  link.href = href;
+  upsertMeta('property', 'og:url', href);
 }
