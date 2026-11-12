@@ -158,20 +158,20 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             {/* Mobile Search Bar inside Header */}
             <div className="pt-0.5 w-full">
               <div className="relative flex items-center w-full">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Buscar graduação..."
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-16 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400 transition-colors shadow-inner backdrop-blur-md"
+                  className="w-full bg-slate-200 border border-slate-300 rounded-xl pl-9 pr-16 py-2 text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-yellow-500 transition-colors shadow-inner"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => {
                       setSearchQuery('');
                     }}
-                    className="absolute right-2.5 text-[10px] font-bold text-slate-400 hover:text-white"
+                    className="absolute right-2.5 text-[10px] font-bold text-slate-600 hover:text-slate-950"
                   >
                     Limpar
                   </button>
@@ -234,9 +234,9 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                     placeholder="Ex: Administração, Direito..."
                     value={searchQuery}
                     onChange={handleSearchInputChange}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-yellow-400"
+                    className="w-full bg-slate-200 border border-slate-300 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-yellow-500"
                   />
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 

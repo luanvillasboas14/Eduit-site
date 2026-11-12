@@ -211,12 +211,12 @@ export const ConsultantModal: React.FC<ConsultantModalProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3 pr-11">
               <div className="w-10 h-10 rounded-xl bg-yellow-400 text-slate-950 flex items-center justify-center shrink-0">
                 <MessageSquare className="w-5 h-5 fill-slate-950" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Consultar Valores & Bolsas</h3>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-white leading-tight">Consultar Valores & Bolsas</h3>
                 <p className="text-xs text-slate-400">
                   Preencha seus dados para desbloquear a mensalidade do curso e falar com um consultor.
                 </p>
