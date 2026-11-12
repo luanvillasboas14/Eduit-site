@@ -1,3 +1,10 @@
+### 2026-11-12 - Pré-renderização no Express, prova em graduação
+
+- **Decisão:** O Express injeta title, description, canonical e o conteúdo da URL no HTML de `/graduacao` e `/graduacao-cruzeiro/:slug`, lendo o mesmo Postgres da API. O React continua em `createRoot` e substitui o `#root` depois do JavaScript. URL desconhecida, ou curso inexistente, responde HTTP 404. As outras rotas seguem o shell atual.
+- **Contexto:** O HTML inicial só tinha `#root` vazio; mecanismos de busca e agentes que não executam JavaScript não viam a grade nem o curso.
+- **Alternativas descartadas:** SSR do React (`renderToString`) agora — os componentes buscam dados em `useEffect` e usam `window`, então o primeiro render sairia vazio e o risco de quebrar a interface é maior. Pré-render só no build — o catálogo muda no banco sem novo deploy.
+- **Impacto:** Prova de conceito, sem mudança de layout, formulário, analytics ou rotas. Há um flash do HTML simples antes do React. Se o Postgres falhar, a página volta ao shell antigo com HTTP 200.
+
 ### 2026-09-16 - Graduação a partir do CMS Wix
 
 - **Decisão:** Conteúdo de graduação (duração, formação, textos, meta, imagem) vem do export `graduacao.csv` do Wix. Preços continuam no CSV `preço+gradua.csv`. Slugs/URLs do banco não são alterados. Sync: `python scripts/import_cursos.py --sync-wix-grad`.

@@ -1,6 +1,6 @@
 import { pool } from './db.js';
 
-const STATIC_PATHS = [
+export const STATIC_PATHS = [
   '/',
   '/graduacao',
   '/pos-graduacao',

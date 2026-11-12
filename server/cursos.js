@@ -106,6 +106,18 @@ const SELECT_DETAIL = `
   LEFT JOIN curso_ofertas o ON o.curso_id = c.id
 `;
 
+export async function listCourses(tipo) {
+  const result = tipo
+    ? await pool.query(`${SELECT_LIST} WHERE c.tipo = $1 ORDER BY c.titulo`, [tipo])
+    : await pool.query(`${SELECT_LIST} ORDER BY c.tipo, c.titulo`);
+  return result.rows.map(withLocalImage);
+}
+
+export async function getCourse(slug) {
+  const result = await pool.query(`${SELECT_DETAIL} WHERE c.slug = $1 GROUP BY c.id`, [slug]);
+  return result.rows[0] ? withLocalImage(result.rows[0]) : null;
+}
+
 export function createCursosRouter() {
   const router = Router();
 
@@ -116,10 +128,7 @@ export function createCursosRouter() {
       return;
     }
     try {
-      const result = tipo
-        ? await pool.query(`${SELECT_LIST} WHERE c.tipo = $1 ORDER BY c.titulo`, [tipo])
-        : await pool.query(`${SELECT_LIST} ORDER BY c.tipo, c.titulo`);
-      res.json(result.rows.map(withLocalImage));
+      res.json(await listCourses(tipo));
     } catch (error) {
       console.error('GET /api/cursos', error);
       res.status(500).json({ error: 'Falha ao ler cursos' });
@@ -128,14 +137,12 @@ export function createCursosRouter() {
 
   router.get('/:slug', async (req, res) => {
     try {
-      const result = await pool.query(`${SELECT_DETAIL} WHERE c.slug = $1 GROUP BY c.id`, [
-        req.params.slug,
-      ]);
-      if (!result.rows[0]) {
+      const course = await getCourse(req.params.slug);
+      if (!course) {
         res.status(404).json({ error: 'Curso não encontrado' });
         return;
       }
-      res.json(withLocalImage(result.rows[0]));
+      res.json(course);
     } catch (error) {
       console.error('GET /api/cursos/:slug', error);
       res.status(500).json({ error: 'Falha ao ler curso' });

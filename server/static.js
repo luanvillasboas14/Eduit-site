@@ -1,6 +1,7 @@
 import { createReadStream, existsSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 import { createGzip, gzipSync } from 'zlib';
+import { resolvePrerender } from './prerender.js';
 
 const PUBLIC_ORIGIN = 'https://www.eduit.com.br';
 
@@ -69,6 +70,56 @@ function escapeAttr(value) {
   return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
+function upsertTag(html, pattern, tag) {
+  if (pattern.test(html)) return html.replace(pattern, tag);
+  return html.replace('</head>', `    ${tag}\n  </head>`);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+export function applyDocument(html, doc) {
+  let next = withCanonical(html, canonicalHref(doc.path));
+  next = next.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(doc.title)}</title>`);
+  next = upsertTag(
+    next,
+    /<meta\s+name="description"[^>]*>/i,
+    `<meta name="description" content="${escapeHtml(doc.description)}" />`,
+  );
+  next = upsertTag(
+    next,
+    /<meta\s+property="og:title"[^>]*>/i,
+    `<meta property="og:title" content="${escapeHtml(doc.title)}" />`,
+  );
+  next = upsertTag(
+    next,
+    /<meta\s+property="og:description"[^>]*>/i,
+    `<meta property="og:description" content="${escapeHtml(doc.description)}" />`,
+  );
+  next = upsertTag(
+    next,
+    /<meta\s+property="og:type"[^>]*>/i,
+    `<meta property="og:type" content="website" />`,
+  );
+  if (doc.robots) {
+    next = upsertTag(
+      next,
+      /<meta\s+name="robots"[^>]*>/i,
+      `<meta name="robots" content="${escapeHtml(doc.robots)}" />`,
+    );
+  }
+  const body = `<div id="root"><main data-prerender="${escapeHtml(doc.kind)}">${doc.body}</main></div>`;
+  if (!next.includes('<div id="root"></div>')) {
+    throw new Error('index.html sem #root vazio');
+  }
+  return next.replace('<div id="root"></div>', body);
+}
+
 export function withCanonical(html, href) {
   const safe = escapeAttr(href);
   const link = `<link rel="canonical" href="${safe}" />`;
@@ -87,13 +138,25 @@ export function withCanonical(html, href) {
   return next;
 }
 
-function sendIndex(req, res, filePath) {
-  const html = withCanonical(readFileSync(filePath, 'utf8'), canonicalHref(req.path));
+async function sendIndex(req, res, filePath) {
+  const raw = readFileSync(filePath, 'utf8');
+  let status = 200;
+  let html = withCanonical(raw, canonicalHref(req.path));
+  try {
+    const doc = await resolvePrerender(req.path);
+    if (doc) {
+      status = doc.status;
+      html = applyDocument(raw, doc);
+    }
+  } catch (error) {
+    console.error('prerender', req.path, error);
+  }
+  res.status(status);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   if (req.method === 'HEAD') {
-    res.status(200).end();
+    res.end();
     return;
   }
   if (wantsGzip(req)) {
@@ -147,7 +210,10 @@ export function attachSpaStatic(app, distDir) {
     const target = safeResolve(dist, req.path);
     if (target && existsSync(target) && statSync(target).isFile()) {
       if (path.basename(target) === 'index.html') {
-        sendIndex(req, res, target);
+        sendIndex(req, res, target).catch((error) => {
+          console.error('index.html', error);
+          if (!res.headersSent) res.status(500).end();
+        });
         return;
       }
       sendFile(req, res, target);
@@ -158,7 +224,10 @@ export function attachSpaStatic(app, distDir) {
       next();
       return;
     }
-    sendIndex(req, res, indexFile);
+    sendIndex(req, res, indexFile).catch((error) => {
+      console.error('index.html', error);
+      if (!res.headersSent) res.status(500).end();
+    });
   });
 }
 
