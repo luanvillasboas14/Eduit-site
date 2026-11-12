@@ -17,10 +17,12 @@ export const Hero: React.FC<HeroProps> = ({
       {/* Background image banner */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
-          src="/hero.webp"
+          src="/hero-mobile.webp"
+          srcSet="/hero-mobile.webp 828w, /hero.webp 1440w"
+          sizes="100vw"
           alt="Alunas estudando ao ar livre com caderno e laptop"
-          width={1920}
-          height={800}
+          width={1440}
+          height={556}
           decoding="async"
           fetchPriority="high"
           referrerPolicy="no-referrer"

@@ -5,6 +5,13 @@
 - **Alternativas descartadas:** SSR do React (`renderToString`) agora — os componentes buscam dados em `useEffect` e usam `window`, então o primeiro render sairia vazio e o risco de quebrar a interface é maior. Pré-render só no build — o catálogo muda no banco sem novo deploy.
 - **Impacto:** Prova de conceito, sem mudança de layout, formulário, analytics ou rotas. Há um flash do HTML simples antes do React. Se o Postgres falhar, a página volta ao shell antigo com HTTP 200.
 
+### 2026-11-12 - O pré-render não pode pintar no celular
+
+- **Decisão:** O conteúdo pré-renderizado vai para `<noscript>`, com o `#root` vazio. O celular com JavaScript não monta esses nós, então não há troca de layout nem atraso da imagem principal. A listagem e o curso ficam em cache por 5 minutos. A página de pós não consulta o banco só para responder o HTML. No celular, o banner usa uma versão de 828 px e as fotos dos cursos em destaque carregam depois.
+- **Contexto:** A lista de 128 cursos estava dentro do `#root`. O navegador desenhava esse bloco e o React apagava tudo em seguida. No celular isso aumentava o LCP, o deslocamento de layout e o trabalho da thread principal.
+- **Alternativas descartadas:** Tirar o texto do HTML (os agentes sem JavaScript voltariam a ver a página vazia). Esconder o bloco com CSS (o Google trata texto oculto como disfarce).
+- **Impacto:** Quem não executa JavaScript continua lendo o conteúdo. A interface com JavaScript não muda.
+
 ### 2026-09-16 - Graduação a partir do CMS Wix
 
 - **Decisão:** Conteúdo de graduação (duração, formação, textos, meta, imagem) vem do export `graduacao.csv` do Wix. Preços continuam no CSV `preço+gradua.csv`. Slugs/URLs do banco não são alterados. Sync: `python scripts/import_cursos.py --sync-wix-grad`.

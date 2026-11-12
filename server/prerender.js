@@ -4,6 +4,8 @@ import { STATIC_PATHS } from './public.js';
 const BRAND = 'Cruzeiro do Sul Virtual';
 const COURSE_SLUG = /^\/graduacao-cruzeiro\/([a-z0-9-]+)$/;
 const POS_SLUG = /^\/pos\/([a-z0-9-]+)$/;
+const CACHE_MS = 5 * 60 * 1000;
+const cache = new Map();
 
 export function escapeHtml(value) {
   return String(value ?? '')
@@ -121,6 +123,21 @@ function isKnownShell(pathname) {
   return pathname.startsWith('/post/');
 }
 
+function cached(key) {
+  const hit = cache.get(key);
+  if (!hit) return undefined;
+  if (hit.expires <= Date.now()) {
+    cache.delete(key);
+    return undefined;
+  }
+  return hit.doc;
+}
+
+function remember(key, doc) {
+  cache.set(key, { doc, expires: Date.now() + CACHE_MS });
+  return doc;
+}
+
 export function documentForGraduacaoCourse(course, pathOnly) {
   if (!course || course.tipo !== 'graduacao') return buildNotFoundDocument(pathOnly);
   return buildCourseDocument(course);
@@ -133,20 +150,19 @@ export function documentForPosCourse(course, pathOnly) {
 
 export async function resolvePrerender(pathname) {
   const pathOnly = String(pathname || '/').split('?')[0] || '/';
+  if (POS_SLUG.test(pathOnly) || (isKnownShell(pathOnly) && pathOnly !== '/graduacao')) return null;
+
+  const stored = cached(pathOnly);
+  if (stored !== undefined) return stored;
+
   if (pathOnly === '/graduacao') {
-    return buildGraduacaoDocument(await listCourses('graduacao'));
+    return remember(pathOnly, buildGraduacaoDocument(await listCourses('graduacao')));
   }
 
   const courseMatch = pathOnly.match(COURSE_SLUG);
   if (courseMatch) {
-    return documentForGraduacaoCourse(await getCourse(courseMatch[1]), pathOnly);
+    return remember(pathOnly, documentForGraduacaoCourse(await getCourse(courseMatch[1]), pathOnly));
   }
 
-  const posMatch = pathOnly.match(POS_SLUG);
-  if (posMatch) {
-    return documentForPosCourse(await getCourse(posMatch[1]), pathOnly);
-  }
-
-  if (isKnownShell(pathOnly)) return null;
   return buildNotFoundDocument(pathOnly);
 }

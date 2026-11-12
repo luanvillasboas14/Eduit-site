@@ -113,11 +113,11 @@ export function applyDocument(html, doc) {
       `<meta name="robots" content="${escapeHtml(doc.robots)}" />`,
     );
   }
-  const body = `<div id="root"><main data-prerender="${escapeHtml(doc.kind)}">${doc.body}</main></div>`;
   if (!next.includes('<div id="root"></div>')) {
     throw new Error('index.html sem #root vazio');
   }
-  return next.replace('<div id="root"></div>', body);
+  const fallback = `<noscript><main data-prerender="${escapeHtml(doc.kind)}">${doc.body}</main></noscript>`;
+  return next.replace('</body>', `    ${fallback}\n  </body>`);
 }
 
 export function withCanonical(html, href) {
